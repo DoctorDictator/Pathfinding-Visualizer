@@ -1,5 +1,9 @@
+import triangleRight from "../icons/triangletwo-right.svg";
+import circle from "../icons/circle.svg";
+
 import { useState, useEffect, useRef } from "react";
 import Cell from "./Cell";
+import Image from "./Image";
 
 const debounce = (func, wait) => {
   let timeout;
@@ -10,7 +14,12 @@ const debounce = (func, wait) => {
 };
 
 export default function Board() {
+  // 0 -> path (default)
+  // 1 -> wall
+  // 2 -> starting node
+  // 3 -> ending node
   const [dragging, setDragging] = useState(false);
+  const [draggedNode, setDraggedNode] = useState(null); // { row, col, type, x, y }
   const gridRef = useRef(null);
   const [box, setBox] = useState([]);
   const [rows, setRows] = useState(0);
@@ -18,27 +27,84 @@ export default function Board() {
   const [cellSize, setCellSize] = useState(20);
 
   const addWall = (row, column) => {
+    if (draggedNode) return; // Skip wall drawing during node drag
     setBox((prevBox) => {
       const newBox = prevBox.map((r) => [...r]);
       if (newBox[row][column] === 0) {
         newBox[row][column] = 1;
+      } else if (newBox[row][column] === 2 || newBox[row][column] === 3) {
+        console.log(row, column);
       } else {
         newBox[row][column] = 0;
       }
       return newBox;
     });
   };
+
+  const startNodeDrag = (row, col, type, x, y) => {
+    setDraggedNode({ row, col, type, x, y });
+    setDragging(true);
+  };
+
   const handleMouseDown = (e) => {
     if (e.button === 0) {
       e.preventDefault();
-      setDragging(true);
+      if (!draggedNode) {
+        setDragging(true);
+      }
     }
   };
 
   const handleMouseUp = (e) => {
-    if (e.button === 0) {
-      setDragging(false);
+    if (e.button !== 0) return;
+
+    setDragging(false);
+    if (!draggedNode) return;
+
+    const gridElement = gridRef.current;
+    if (!gridElement) {
+      console.log("Grid element not found");
+      setDraggedNode(null);
+      return;
     }
+
+    const rect = gridElement.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    const targetCol = Math.floor(x / cellSize);
+    const targetRow = Math.floor(y / cellSize);
+
+    // console.log(`Drop at: targetRow=${targetRow}, targetCol=${targetCol}`);
+
+    if (
+      targetRow < 0 ||
+      targetRow >= rows ||
+      targetCol < 0 ||
+      targetCol >= cols
+    ) {
+      setDraggedNode(null);
+      return;
+    }
+
+    if (targetRow === draggedNode.row && targetCol === draggedNode.col) {
+      setDraggedNode(null);
+      return;
+    }
+
+    if (box[targetRow][targetCol] === 2 || box[targetRow][targetCol] === 3) {
+      setDraggedNode(null);
+      return;
+    }
+
+    setBox((prevBox) => {
+      const newBox = prevBox.map((r) => [...r]);
+      newBox[draggedNode.row][draggedNode.col] = 0; // Clear original
+      newBox[targetRow][targetCol] = draggedNode.type; // Set new position
+      return newBox;
+    });
+
+    setDraggedNode(null);
   };
 
   const handleMouseMove = (e) => {
@@ -54,7 +120,15 @@ export default function Board() {
     const col = Math.floor(x / cellSize);
     const row = Math.floor(y / cellSize);
 
-    if (row >= 0 && row < rows && col >= 0 && col < cols) {
+    if (draggedNode) {
+      setDraggedNode((prev) => ({
+        ...prev,
+        x: e.clientX,
+        y: e.clientY,
+      }));
+      if (row >= 0 && row < rows && col >= 0 && col < cols) {
+      }
+    } else if (row >= 0 && row < rows && col >= 0 && col < cols) {
       addWall(row, col);
     }
   };
@@ -120,6 +194,14 @@ export default function Board() {
       .fill()
       .map(() => Array(maxCols).fill(0));
 
+    const startRow = Math.min(10, maxRows - 1);
+    const startCol = Math.min(10, maxCols - 1);
+    const endRow = Math.min(10, maxRows - 1);
+    const endCol = Math.min(40, maxCols - 1);
+
+    newBox[startRow][startCol] = 2;
+    newBox[endRow][endCol] = 3;
+
     setBox(newBox);
     setRows(maxRows);
     setCols(maxCols);
@@ -134,7 +216,7 @@ export default function Board() {
   }, []);
 
   return (
-    <div className="w-full h-full p-1 sm:p-2 md:p-3 flex justify-center">
+    <div className="w-full h-full p-1 sm:p-2 md:p-3 flex justify-center relative">
       <div
         ref={gridRef}
         className="grid bg-white rounded-lg shadow-xl border border-gray-200"
@@ -143,6 +225,7 @@ export default function Board() {
           gridTemplateRows: `repeat(${rows}, ${cellSize}px)`,
           boxShadow:
             "0 4px 6px rgba(0, 0, 0, 0.1), 0 -4px 6px rgba(0, 0, 0, 0.1), 4px 0 6px rgba(0, 0, 0, 0.1), -4px 0 6px rgba(0, 0, 0, 0.1)",
+          userSelect: "none",
         }}
         onMouseDown={handleMouseDown}
         onMouseUp={handleMouseUp}
@@ -152,16 +235,38 @@ export default function Board() {
         {box.map((row, rowIndex) =>
           row.map((col, colIndex) => (
             <Cell
-              handleAddWall={addWall}
-              grid={box}
               key={`${rowIndex}-${colIndex}`}
+              cellSize={cellSize}
+              handleAddWall={addWall}
               row={rowIndex}
               col={colIndex}
               cell={box[rowIndex][colIndex]}
+              startNodeDrag={startNodeDrag}
             />
           ))
         )}
       </div>
+      {draggedNode && (
+        <div
+          className={`border border-gray-200 opacity-70 pointer-events-none `}
+          style={{
+            position: "absolute",
+            width: `${cellSize}px`,
+            height: `${cellSize}px`,
+            left: draggedNode.x - 25, // Small offset to align with cursor tip
+            top: draggedNode.y - 110,
+            zIndex: 10,
+            cursor: "grabbing",
+          }}
+        >
+          {draggedNode.type === 2 && (
+            <Image src={triangleRight} width="100%" height="100%" />
+          )}
+          {draggedNode.type === 3 && (
+            <Image src={circle} width="100%" height="100%" />
+          )}
+        </div>
+      )}
     </div>
   );
 }
