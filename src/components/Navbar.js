@@ -1,6 +1,9 @@
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
+import { WrapperContext } from "../wrapper";
 
 export default function Navbar() {
+  const { addWeightedNode } = useContext(WrapperContext);
+
   const [algorithmToggle, setAlgorithmToggle] = useState(true);
   const [mazeAndPatternsToggle, setmazeAndPatternsToggle] = useState(true);
   const [speedToggle, setSpeedToggle] = useState(true);
@@ -67,18 +70,19 @@ export default function Navbar() {
         <div className="max-w-7xl py-4 mx-auto w-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center">
-              <a href="" className="text-white outline-none text-lg font-bold">
+              <a href="/" className="text-white outline-none text-lg font-bold">
                 PathFinding Visualizer
               </a>
             </div>
             <div className="hidden lg:block">
               <div className="ml-10 flex items-baseline space-x-4">
-                <a
-                  href=""
-                  className="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium"
+                <button
+                  onClick={addWeightedNode}
+                  className="text-gray-300  hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium"
                 >
-                  Home
-                </a>
+                  Add Weights
+                </button>
+
                 <div className="relative">
                   <button
                     id="algorithms"
@@ -324,12 +328,12 @@ export default function Navbar() {
           } lg:hidden fixed inset-y-0 left-0 w-64 bg-gray-800 transform transition-transform duration-300 ease-in-out z-10`}
         >
           <div className="px-2 pt-16 pb-3 space-y-1 sm:px-3">
-            <a
-              href=""
-              className="text-gray-300 hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium"
+            <button
+              onClick={addWeightedNode}
+              className="text-gray-300  hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium"
             >
-              Home
-            </a>
+              Add Weights
+            </button>
             <div>
               <button
                 id="mobile-algorithm-toggle"

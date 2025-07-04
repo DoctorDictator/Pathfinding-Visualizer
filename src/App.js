@@ -3,12 +3,15 @@ import "./App.css";
 import "./output.css";
 import Navbar from "./components/Navbar";
 import Board from "./components/Board";
+import { Wrapper } from "./wrapper";
 
 function App() {
   return (
     <>
-      <Navbar />
-      <Board />
+      <Wrapper>
+        <Navbar />
+        <Board />
+      </Wrapper>
     </>
   );
 }
