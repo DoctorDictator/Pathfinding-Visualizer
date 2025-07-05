@@ -84,7 +84,7 @@ function divide(
 }
 
 export default function generateMaze(box, rows, cols) {
-  // 0: empty, 1: wall, 2: start, 3: end, 4: weight
+  // 0: empty, 1: wall, 2: start, 3: end, 4: bombst, 5: weights
   const newGrid = Array.from({ length: rows }, () => Array(cols).fill(0));
   let start = null,
     end = null,
@@ -112,7 +112,7 @@ export default function generateMaze(box, rows, cols) {
     animation.push([rows - 1, j]);
   }
 
-  // Reserve start/end/weight positions
+  // Reserve start/end/bombs positions
   const reservedSet = new Set();
   if (start) reservedSet.add(`${start[0]},${start[1]}`);
   if (end) reservedSet.add(`${end[0]},${end[1]}`);
@@ -136,14 +136,13 @@ export default function generateMaze(box, rows, cols) {
     reservedSet
   );
 
-  // Restore start/end/weight
+  // Restore start/end/bombs
   if (start) newGrid[start[0]][start[1]] = 2;
   if (end) newGrid[end[0]][end[1]] = 3;
   for (let i = 0; i < weight.length; i++) {
     let [r, c] = weight[i];
     newGrid[r][c] = 4;
   }
-  //   if (weight) newGrid[weight[0]][weight[1]] = 4;
 
   return { newGrid, animation };
 }

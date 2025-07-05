@@ -84,7 +84,7 @@ function divide(
 }
 
 export default function generateMazeHorizontal(box, rows, cols) {
-  // 0: empty, 1: wall, 2: start, 3: end, 4: weight
+  // 0: empty, 1: wall, 2: start, 3: end, 4: bombst, 5: weights
   const newGrid = Array.from({ length: rows }, () => Array(cols).fill(0));
   let start = null,
     end = null,

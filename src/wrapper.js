@@ -13,8 +13,11 @@ export const Wrapper = ({ children }) => {
   const [recursiveDivisionVertical, setRecursiveDivisonVertical] =
     useState(false);
   const [randomMaze, setRandomMaze] = useState(false);
-  const [randomMazeWithWights, setRandomMazeWithWeights] = useState(false);
+  const [randomMazeWithWeights, setRandomMazeWithWeights] = useState(false);
   const [speed, setSpeed] = useState(25);
+  const [clearBoard, setClearBoard] = useState(false);
+  const [clearBombs, setClearBombs] = useState(false);
+  const [clearWallsAndWeights, setClearWallsAndWeights] = useState(false);
 
   const addBombNode = () => {
     setbombNode((cur) => cur + 1); // Correctly return the incremented value
@@ -40,6 +43,15 @@ export const Wrapper = ({ children }) => {
   const speedChange = (n) => {
     setSpeed(n);
   };
+  const startClearBoard = () => {
+    setClearBoard((prev) => !prev);
+  };
+  const startClearBombs = () => {
+    setClearBombs((prev) => !prev);
+  };
+  const startClearWallsAdnWeights = () => {
+    setClearWallsAndWeights((prev) => !prev);
+  };
 
   return (
     <WrapperContext.Provider
@@ -54,10 +66,16 @@ export const Wrapper = ({ children }) => {
         startRecursiveDivisionVertical,
         randomMaze,
         startRandomMaze,
-        randomMazeWithWights,
+        randomMazeWithWeights,
         startRandomMazeWithWeights,
         speed,
         speedChange,
+        clearBoard,
+        startClearBoard,
+        clearBombs,
+        startClearBombs,
+        clearWallsAndWeights,
+        startClearWallsAdnWeights,
       }}
     >
       {children}

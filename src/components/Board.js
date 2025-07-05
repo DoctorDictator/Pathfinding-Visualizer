@@ -5,12 +5,17 @@ import Image from "./Image";
 import triangleRight from "../icons/triangletwo-right.svg";
 import circle from "../icons/circle.svg";
 import weight from "../icons/weight.svg";
+import bomb from "../icons/bomb.svg";
 import { WrapperContext } from "../wrapper";
 import generateMaze from "../function/maze/generateMaze";
 import generateMazeVertical from "../function/maze/generateMazeVertical";
 import generateMazeHorizontal from "../function/maze/generateMazeHorizontal";
 import generateMazeRandom from "../function/maze/generateMazeRandomWalls";
 import generateMazeRandomWithWeights from "../function/maze/generateMazeRandomWeights";
+import clearBoard from "../function/clear/clearBoard";
+import generateClearBoard from "../function/clear/clearBoard";
+import generateClearBombs from "../function/clear/clearBombs";
+import generateClearWallsAndWeights from "../function/clear/clearWallsAndWeights";
 
 // Debounce function for resize events
 const debounce = (func, wait) => {
@@ -60,6 +65,8 @@ const getCellsBetween = (x0, y0, x1, y1, cellSize, rows, cols) => {
   return cells;
 };
 
+let animated = [];
+
 export default function Board() {
   // State for grid and interaction
   const [dragging, setDragging] = useState(false);
@@ -78,9 +85,15 @@ export default function Board() {
     startRecursiveDivisionHorizontal,
     randomMaze,
     startRandomMaze,
-    randomMazeWithWights,
+    randomMazeWithWeights,
     startRandomMazeWithWeights,
     speed,
+    clearBoard,
+    startClearBoard,
+    clearBombs,
+    startClearBombs,
+    clearWallsAndWeights,
+    startClearWallsAdnWeights,
   } = useContext(WrapperContext);
   const gridRef = useRef(null);
   const isInitialRender = useRef(true);
@@ -88,9 +101,12 @@ export default function Board() {
   const lastMousePos = useRef(null);
   const isClick = useRef(false);
 
+  ////////////////////////////////////////////////
+
   useEffect(() => {
     if (recursiveDivision && rows > 0 && cols > 0 && box.length > 0) {
       const { newGrid, animation } = generateMaze(box, rows, cols);
+      animated = animation;
 
       let i = 0;
       function animateStep() {
@@ -123,9 +139,13 @@ export default function Board() {
       }
     }
   }, [recursiveDivision, rows, cols, box.length]);
+
+  /////////////////////////////////////////////////////
+
   useEffect(() => {
     if (recursiveDivisionVertical && rows > 0 && cols > 0 && box.length > 0) {
       const { newGrid, animation } = generateMazeVertical(box, rows, cols);
+      animated = animation;
 
       let i = 0;
       function animateStep() {
@@ -158,10 +178,13 @@ export default function Board() {
       }
     }
   }, [recursiveDivisionVertical, rows, cols, box.length]);
+
+  ////////////////////////////////////////////////////////////////////
+
   useEffect(() => {
     if (recursiveDivisionHorizontal && rows > 0 && cols > 0 && box.length > 0) {
       const { newGrid, animation } = generateMazeHorizontal(box, rows, cols);
-
+      animated = animation;
       let i = 0;
       function animateStep() {
         if (!Array.isArray(animation) || i >= animation.length) {
@@ -193,10 +216,12 @@ export default function Board() {
       }
     }
   }, [recursiveDivisionHorizontal, rows, cols, box.length]);
+
+  ////////////////////////////////////////////////////////////////
   useEffect(() => {
     if (randomMaze && rows > 0 && cols > 0 && box.length > 0) {
       const { newGrid, animation } = generateMazeRandom(box, rows, cols);
-
+      animated = animation;
       let i = 0;
       function animateStep() {
         if (!Array.isArray(animation) || i >= animation.length) {
@@ -228,13 +253,17 @@ export default function Board() {
       }
     }
   }, [randomMaze, rows, cols, box.length]);
+
+  /////////////////////////////////////////////////////////////////////
+
   useEffect(() => {
-    if (randomMazeWithWights && rows > 0 && cols > 0 && box.length > 0) {
+    if (randomMazeWithWeights && rows > 0 && cols > 0 && box.length > 0) {
       const { newGrid, animation } = generateMazeRandomWithWeights(
         box,
         rows,
         cols
       );
+      animated = animation;
 
       let i = 0;
       function animateStep() {
@@ -266,7 +295,125 @@ export default function Board() {
         startRandomMazeWithWeights();
       }
     }
-  }, [randomMazeWithWights, rows, cols, box.length]);
+  }, [randomMazeWithWeights, rows, cols, box.length]);
+
+  ///////////////////////////////////////////////////////////////////
+
+  useEffect(() => {
+    if (clearBoard && rows > 0 && cols > 0 && box.length > 0) {
+      const { newGrid, animation } = generateClearBoard(box, rows, cols);
+      animated.reverse();
+      let i = 0;
+      function animateStep() {
+        if (!Array.isArray(animated) || i >= animated.length) {
+          setBox(newGrid);
+          return;
+        }
+        const cell = animated[i];
+        if (Array.isArray(cell) && cell.length === 2) {
+          setBox((prev) =>
+            produce(prev, (draft) => {
+              const [r, c] = cell;
+
+              if (draft[r][c] !== 2 && draft[r][c] !== 3) {
+                draft[r][c] = 0;
+              }
+            })
+          );
+        }
+        i++;
+        setTimeout(animateStep, 0.1);
+      }
+
+      if (Array.isArray(animated) && animated.length > 0) {
+        animateStep();
+        startClearBoard();
+      } else if (newGrid) {
+        setBox(newGrid);
+        startClearBoard();
+      }
+    }
+  }, [clearBoard, rows, cols, box.length]);
+
+  ////////////////////////////////////////////////////////////////
+
+  useEffect(() => {
+    if (clearBombs && rows > 0 && cols > 0 && box.length > 0) {
+      const { newGrid, animation } = generateClearBombs(box, rows, cols);
+
+      let i = 0;
+      function animateStep() {
+        if (!Array.isArray(animation) || i >= animation.length) {
+          setBox(newGrid);
+          return;
+        }
+        const cell = animation[i];
+        if (Array.isArray(cell) && cell.length === 2) {
+          setBox((prev) =>
+            produce(prev, (draft) => {
+              const [r, c] = cell;
+
+              if (draft[r][c] !== 2 && draft[r][c] !== 3 && draft[r][c] !== 1) {
+                draft[r][c] = 0;
+              }
+            })
+          );
+        }
+        i++;
+        setTimeout(animateStep, 0);
+      }
+
+      if (Array.isArray(animation) && animation.length > 0) {
+        animateStep();
+        startClearBombs();
+      } else if (newGrid) {
+        setBox(newGrid);
+        startClearBombs();
+      }
+    }
+  }, [clearBombs, rows, cols, box.length]);
+
+  //////////////////////////////////////////////////////////////////
+
+  useEffect(() => {
+    if (clearWallsAndWeights && rows > 0 && cols > 0 && box.length > 0) {
+      const { newGrid, animation } = generateClearWallsAndWeights(
+        box,
+        rows,
+        cols
+      );
+
+      let i = 0;
+      function animateStep() {
+        if (!Array.isArray(animation) || i >= animation.length) {
+          setBox(newGrid);
+          return;
+        }
+        const cell = animation[i];
+        if (Array.isArray(cell) && cell.length === 2) {
+          setBox((prev) =>
+            produce(prev, (draft) => {
+              const [r, c] = cell;
+
+              if (draft[r][c] !== 2 && draft[r][c] !== 3 && draft[r][c] !== 4) {
+                draft[r][c] = 0;
+              }
+            })
+          );
+        }
+        i++;
+        setTimeout(animateStep, 0);
+      }
+
+      if (Array.isArray(animation) && animation.length > 0) {
+        animateStep();
+        startClearWallsAdnWeights();
+      } else if (newGrid) {
+        setBox(newGrid);
+        startClearWallsAdnWeights();
+      }
+    }
+  }, [clearWallsAndWeights, rows, cols, box.length]);
   const addWalls = (cells) => {
     if (draggedNode) return;
     setBox(
@@ -567,7 +714,7 @@ export default function Board() {
             <Image src={circle} width="100%" height="100%" />
           )}
           {draggedNode.type === 4 && (
-            <Image src={weight} width="100%" height="100%" />
+            <Image src={bomb} width="100%" height="100%" />
           )}
         </div>
       )}

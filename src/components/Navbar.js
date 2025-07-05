@@ -10,6 +10,9 @@ export default function Navbar() {
     startRandomMaze,
     startRandomMazeWithWeights,
     speedChange,
+    startClearBoard,
+    startClearBombs,
+    startClearWallsAdnWeights,
   } = useContext(WrapperContext);
 
   const [algorithmToggle, setAlgorithmToggle] = useState(true);
@@ -287,24 +290,24 @@ export default function Navbar() {
                       clearToggle && `hidden`
                     } absolute z-10 mt-2 w-48 rounded shadow-lg bg-gray-700`}
                   >
-                    <a
-                      href=""
+                    <button
+                      onClick={startClearBoard}
                       className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-600 hover:text-white"
                     >
                       Clear Board
-                    </a>
-                    <a
-                      href=""
+                    </button>
+                    <button
+                      onClick={startClearWallsAdnWeights}
                       className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-600 hover:text-white"
                     >
                       Clear Walls and Weights
-                    </a>
-                    <a
-                      href=""
+                    </button>
+                    <button
+                      onClick={startClearBombs}
                       className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-600 hover:text-white"
                     >
-                      Clear Walls and Weights
-                    </a>
+                      Clear Bombs
+                    </button>
                   </div>
                 </div>
                 <button className="text-white bg-yellow-300 hover:bg-gray-700 hover:text-white px-10 py-2 rounded-md text-sm font-medium">
@@ -538,24 +541,24 @@ export default function Navbar() {
                 id="mobile-algorithm-dropdown"
                 className={`${clearToggle && `hidden`} pl-4 space-y-1`}
               >
-                <a
-                  href=""
+                <button
+                  onClick={startClearBoard}
                   className="text-gray-300 hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium"
                 >
                   Clear Board
-                </a>
-                <a
-                  href=""
+                </button>
+                <button
+                  onClick={startClearWallsAdnWeights}
                   className="text-gray-300 hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium"
                 >
                   Clear Walls and Weights
-                </a>
-                <a
-                  href=""
+                </button>
+                <button
+                  onClick={startClearBombs}
                   className="text-gray-300 hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium"
                 >
-                  Clear Walls and Weights
-                </a>
+                  Clear Bombs
+                </button>
               </div>
             </div>
 
