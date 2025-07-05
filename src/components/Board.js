@@ -80,6 +80,7 @@ export default function Board() {
     startRandomMaze,
     randomMazeWithWights,
     startRandomMazeWithWeights,
+    speed,
   } = useContext(WrapperContext);
   const gridRef = useRef(null);
   const isInitialRender = useRef(true);
@@ -110,7 +111,7 @@ export default function Board() {
           );
         }
         i++;
-        setTimeout(animateStep, 10);
+        setTimeout(animateStep, speed);
       }
 
       if (Array.isArray(animation) && animation.length > 0) {
@@ -145,7 +146,7 @@ export default function Board() {
           );
         }
         i++;
-        setTimeout(animateStep, 10);
+        setTimeout(animateStep, speed);
       }
 
       if (Array.isArray(animation) && animation.length > 0) {
@@ -180,7 +181,7 @@ export default function Board() {
           );
         }
         i++;
-        setTimeout(animateStep, 10);
+        setTimeout(animateStep, speed);
       }
 
       if (Array.isArray(animation) && animation.length > 0) {
@@ -215,7 +216,7 @@ export default function Board() {
           );
         }
         i++;
-        setTimeout(animateStep, 10);
+        setTimeout(animateStep, speed);
       }
 
       if (Array.isArray(animation) && animation.length > 0) {
@@ -254,7 +255,7 @@ export default function Board() {
           );
         }
         i++;
-        setTimeout(animateStep, 10);
+        setTimeout(animateStep, speed);
       }
 
       if (Array.isArray(animation) && animation.length > 0) {

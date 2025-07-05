@@ -9,6 +9,7 @@ export default function Navbar() {
     startRecursiveDivisionVertical,
     startRandomMaze,
     startRandomMazeWithWeights,
+    speedChange,
   } = useContext(WrapperContext);
 
   const [algorithmToggle, setAlgorithmToggle] = useState(true);
@@ -232,24 +233,30 @@ export default function Navbar() {
                       speedToggle && `hidden`
                     } absolute z-10 mt-2 w-48 rounded shadow-lg bg-gray-700`}
                   >
-                    <a
-                      href=""
+                    <button
+                      onClick={() => {
+                        speedChange(40);
+                      }}
                       className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-600 hover:text-white"
                     >
                       Slow
-                    </a>
-                    <a
-                      href=""
+                    </button>
+                    <button
+                      onClick={() => {
+                        speedChange(25);
+                      }}
                       className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-600 hover:text-white"
                     >
                       Normal
-                    </a>
-                    <a
-                      href=""
+                    </button>
+                    <button
+                      onClick={() => {
+                        speedChange(10);
+                      }}
                       className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-600 hover:text-white"
                     >
                       Fast
-                    </a>
+                    </button>
                   </div>
                 </div>
                 <div className="relative">
@@ -479,24 +486,30 @@ export default function Navbar() {
                 id="mobile-algorithm-dropdown"
                 className={`${speedToggle && `hidden`} pl-4 space-y-1`}
               >
-                <a
-                  href=""
+                <button
+                  onClick={() => {
+                    speedChange(40);
+                  }}
                   className="text-gray-300 hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium"
                 >
                   Slow
-                </a>
-                <a
-                  href=""
+                </button>
+                <button
+                  onClick={() => {
+                    speedChange(25);
+                  }}
                   className="text-gray-300 hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium"
                 >
                   Normal
-                </a>
-                <a
-                  href=""
+                </button>
+                <button
+                  onClick={() => {
+                    speedChange(10);
+                  }}
                   className="text-gray-300 hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium"
                 >
                   Fast
-                </a>
+                </button>
               </div>
             </div>
             <div>

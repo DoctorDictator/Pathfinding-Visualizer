@@ -14,6 +14,7 @@ export const Wrapper = ({ children }) => {
     useState(false);
   const [randomMaze, setRandomMaze] = useState(false);
   const [randomMazeWithWights, setRandomMazeWithWeights] = useState(false);
+  const [speed, setSpeed] = useState(25);
 
   const addBombNode = () => {
     setbombNode((cur) => cur + 1); // Correctly return the incremented value
@@ -36,6 +37,9 @@ export const Wrapper = ({ children }) => {
   const startRandomMazeWithWeights = () => {
     setRandomMazeWithWeights((prev) => !prev);
   };
+  const speedChange = (n) => {
+    setSpeed(n);
+  };
 
   return (
     <WrapperContext.Provider
@@ -52,6 +56,8 @@ export const Wrapper = ({ children }) => {
         startRandomMaze,
         randomMazeWithWights,
         startRandomMazeWithWeights,
+        speed,
+        speedChange,
       }}
     >
       {children}
