@@ -1,0 +1,35 @@
+[33mcommit 0b48ba8354d566363c2896641e81ce04084d85a5[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m
+Author: DoctorDictator <harshshishodia08@gmail.com>
+Date:   Sat Jul 5 10:47:28 2025 +0530
+
+    Update : Wrote the recursive division algorithm along with 4 others. The horizontal and vertical algorithm is derived from the recursive divionsion. Replaced 4 for bombs and 5 for weights
+
+[33mcommit a37bca26cbed59509b3b82117205591bbe89f3a5[m[33m ([m[1;31morigin/main[m[33m)[m
+Author: DoctorDictator <harshshishodia08@gmail.com>
+Date:   Fri Jul 4 09:58:46 2025 +0530
+
+    Update : Create the weights and improved the smoothness in creating walls
+
+[33mcommit ad8a4edb9ca9f01243755da8796853b74ec326d9[m
+Author: DoctorDictator <harshshishodia08@gmail.com>
+Date:   Thu Jul 3 06:47:53 2025 +0530
+
+    Update:  Created start and end nodes and also made a feature to drag and drop them
+
+[33mcommit c481901f62efe687c6c31204741dc0af70d8c6f4[m
+Author: Harsh Shishodia <harshshishodia08@gmail.com>
+Date:   Wed Jul 2 15:26:05 2025 +0530
+
+    Create LICENSE
+
+[33mcommit f10aa86e0a08e880cdeef6ce85e4d47448d3f404[m
+Author: DoctorDictator <harshshishodia08@gmail.com>
+Date:   Wed Jul 2 15:11:24 2025 +0530
+
+    Initial commit
+
+[33mcommit 1530e2eae6ab90fdd444f25734dd5f39d12168aa[m
+Author: DoctorDictator <harshshishodia08@gmail.com>
+Date:   Wed Jul 2 05:07:26 2025 +0530
+
+    Initialize project using Create React App
