@@ -2,6 +2,7 @@ import React, { memo } from "react";
 import triangleRight from "../icons/triangletwo-right.svg";
 import circle from "../icons/circle.svg";
 import weight from "../icons/weight.svg";
+import bomb from "../icons/bomb.svg";
 import Image from "./Image";
 
 function Cell({ cellSize, row, col, cell, startNodeDrag }) {
@@ -35,7 +36,8 @@ function Cell({ cellSize, row, col, cell, startNodeDrag }) {
     >
       {cell === 2 && <Image src={triangleRight} width="100%" height="100%" />}
       {cell === 3 && <Image src={circle} width="100%" height="100%" />}
-      {cell === 4 && <Image src={weight} width="100%" height="100%" />}
+      {cell === 4 && <Image src={bomb} width="100%" height="100%" />}
+      {cell === 5 && <Image src={weight} width="100%" height="100%" />}
     </div>
   );
 }

@@ -6,6 +6,11 @@ import triangleRight from "../icons/triangletwo-right.svg";
 import circle from "../icons/circle.svg";
 import weight from "../icons/weight.svg";
 import { WrapperContext } from "../wrapper";
+import generateMaze from "../function/maze/generateMaze";
+import generateMazeVertical from "../function/maze/generateMazeVertical";
+import generateMazeHorizontal from "../function/maze/generateMazeHorizontal";
+import generateMazeRandom from "../function/maze/generateMazeRandomWalls";
+import generateMazeRandomWithWeights from "../function/maze/generateMazeRandomWeights";
 
 // Debounce function for resize events
 const debounce = (func, wait) => {
@@ -63,14 +68,204 @@ export default function Board() {
   const [rows, setRows] = useState(0);
   const [cols, setCols] = useState(0);
   const [cellSize, setCellSize] = useState(20);
-  const { weightedNode, recursiveDivision } = useContext(WrapperContext);
+  const {
+    bombNode,
+    recursiveDivision,
+    startRecursiveDivision,
+    recursiveDivisionVertical,
+    startRecursiveDivisionVertical,
+    recursiveDivisionHorizontal,
+    startRecursiveDivisionHorizontal,
+    randomMaze,
+    startRandomMaze,
+    randomMazeWithWights,
+    startRandomMazeWithWeights,
+  } = useContext(WrapperContext);
   const gridRef = useRef(null);
   const isInitialRender = useRef(true);
-  const prevWeightedNode = useRef(null);
+  const prevbombNode = useRef(null);
   const lastMousePos = useRef(null);
   const isClick = useRef(false);
 
-  // Add or toggle walls for a list of cells
+  useEffect(() => {
+    if (recursiveDivision && rows > 0 && cols > 0 && box.length > 0) {
+      const { newGrid, animation } = generateMaze(box, rows, cols);
+
+      let i = 0;
+      function animateStep() {
+        if (!Array.isArray(animation) || i >= animation.length) {
+          setBox(newGrid);
+          return;
+        }
+        const cell = animation[i];
+        if (Array.isArray(cell) && cell.length === 2) {
+          setBox((prev) =>
+            produce(prev, (draft) => {
+              const [r, c] = cell;
+
+              if (draft[r][c] !== 2 && draft[r][c] !== 3 && draft[r][c] !== 4) {
+                draft[r][c] = 1;
+              }
+            })
+          );
+        }
+        i++;
+        setTimeout(animateStep, 10);
+      }
+
+      if (Array.isArray(animation) && animation.length > 0) {
+        animateStep();
+        startRecursiveDivision();
+      } else if (newGrid) {
+        setBox(newGrid);
+        startRecursiveDivision();
+      }
+    }
+  }, [recursiveDivision, rows, cols, box.length]);
+  useEffect(() => {
+    if (recursiveDivisionVertical && rows > 0 && cols > 0 && box.length > 0) {
+      const { newGrid, animation } = generateMazeVertical(box, rows, cols);
+
+      let i = 0;
+      function animateStep() {
+        if (!Array.isArray(animation) || i >= animation.length) {
+          setBox(newGrid);
+          return;
+        }
+        const cell = animation[i];
+        if (Array.isArray(cell) && cell.length === 2) {
+          setBox((prev) =>
+            produce(prev, (draft) => {
+              const [r, c] = cell;
+
+              if (draft[r][c] !== 2 && draft[r][c] !== 3 && draft[r][c] !== 4) {
+                draft[r][c] = 1;
+              }
+            })
+          );
+        }
+        i++;
+        setTimeout(animateStep, 10);
+      }
+
+      if (Array.isArray(animation) && animation.length > 0) {
+        animateStep();
+        startRecursiveDivisionVertical();
+      } else if (newGrid) {
+        setBox(newGrid);
+        startRecursiveDivisionVertical();
+      }
+    }
+  }, [recursiveDivisionVertical, rows, cols, box.length]);
+  useEffect(() => {
+    if (recursiveDivisionHorizontal && rows > 0 && cols > 0 && box.length > 0) {
+      const { newGrid, animation } = generateMazeHorizontal(box, rows, cols);
+
+      let i = 0;
+      function animateStep() {
+        if (!Array.isArray(animation) || i >= animation.length) {
+          setBox(newGrid);
+          return;
+        }
+        const cell = animation[i];
+        if (Array.isArray(cell) && cell.length === 2) {
+          setBox((prev) =>
+            produce(prev, (draft) => {
+              const [r, c] = cell;
+
+              if (draft[r][c] !== 2 && draft[r][c] !== 3 && draft[r][c] !== 4) {
+                draft[r][c] = 1;
+              }
+            })
+          );
+        }
+        i++;
+        setTimeout(animateStep, 10);
+      }
+
+      if (Array.isArray(animation) && animation.length > 0) {
+        animateStep();
+        startRecursiveDivisionHorizontal();
+      } else if (newGrid) {
+        setBox(newGrid);
+        startRecursiveDivisionHorizontal();
+      }
+    }
+  }, [recursiveDivisionHorizontal, rows, cols, box.length]);
+  useEffect(() => {
+    if (randomMaze && rows > 0 && cols > 0 && box.length > 0) {
+      const { newGrid, animation } = generateMazeRandom(box, rows, cols);
+
+      let i = 0;
+      function animateStep() {
+        if (!Array.isArray(animation) || i >= animation.length) {
+          setBox(newGrid);
+          return;
+        }
+        const cell = animation[i];
+        if (Array.isArray(cell) && cell.length === 2) {
+          setBox((prev) =>
+            produce(prev, (draft) => {
+              const [r, c] = cell;
+
+              if (draft[r][c] !== 2 && draft[r][c] !== 3 && draft[r][c] !== 4) {
+                draft[r][c] = 1;
+              }
+            })
+          );
+        }
+        i++;
+        setTimeout(animateStep, 10);
+      }
+
+      if (Array.isArray(animation) && animation.length > 0) {
+        animateStep();
+        startRandomMaze();
+      } else if (newGrid) {
+        setBox(newGrid);
+        startRandomMaze();
+      }
+    }
+  }, [randomMaze, rows, cols, box.length]);
+  useEffect(() => {
+    if (randomMazeWithWights && rows > 0 && cols > 0 && box.length > 0) {
+      const { newGrid, animation } = generateMazeRandomWithWeights(
+        box,
+        rows,
+        cols
+      );
+
+      let i = 0;
+      function animateStep() {
+        if (!Array.isArray(animation) || i >= animation.length) {
+          setBox(newGrid);
+          return;
+        }
+        const cell = animation[i];
+        if (Array.isArray(cell) && cell.length === 2) {
+          setBox((prev) =>
+            produce(prev, (draft) => {
+              const [r, c] = cell;
+
+              if (draft[r][c] !== 2 && draft[r][c] !== 3 && draft[r][c] !== 4) {
+                draft[r][c] = 5;
+              }
+            })
+          );
+        }
+        i++;
+        setTimeout(animateStep, 10);
+      }
+
+      if (Array.isArray(animation) && animation.length > 0) {
+        animateStep();
+        startRandomMazeWithWeights();
+      } else if (newGrid) {
+        setBox(newGrid);
+        startRandomMazeWithWeights();
+      }
+    }
+  }, [randomMazeWithWights, rows, cols, box.length]);
   const addWalls = (cells) => {
     if (draggedNode) return;
     setBox(
@@ -81,21 +276,19 @@ export default function Board() {
             draft[row][col] !== 3 &&
             draft[row][col] !== 4
           ) {
-            draft[row][col] = draft[row][col] === 0 ? 1 : 0; // Toggle path/wall
+            draft[row][col] = draft[row][col] === 0 ? 1 : 0;
           }
         });
       })
     );
   };
 
-  // Start dragging a node (start, end, or weight)
   const startNodeDrag = (row, col, type, x, y) => {
     setDraggedNode({ row, col, type, x, y });
     setDragging(true);
     isClick.current = false;
   };
 
-  // Handle mouse down to start dragging or add a wall
   const handleMouseDown = (e) => {
     if (e.button !== 0) return;
     e.preventDefault();
@@ -111,21 +304,19 @@ export default function Board() {
         startNodeDrag(row, col, box[row][col], e.clientX, e.clientY);
       } else {
         setDragging(true);
-        isClick.current = true; // Mark as potential click
+        isClick.current = true;
         addWalls([[row, col]]);
         lastMousePos.current = { x, y };
       }
     }
   };
 
-  // Handle mouse up to stop dragging or confirm click
   const handleMouseUp = (e) => {
     if (e.button !== 0) return;
     e.preventDefault();
     setDragging(false);
     lastMousePos.current = null;
     if (isClick.current && !draggedNode) {
-      // Single click already handled in handleMouseDown
       isClick.current = false;
       return;
     }
@@ -178,7 +369,6 @@ export default function Board() {
     isClick.current = false;
   };
 
-  // Handle mouse move for instant wall placement or node dragging
   const handleMouseMove = (e) => {
     if (!dragging) return;
     const gridElement = gridRef.current;
@@ -196,7 +386,7 @@ export default function Board() {
         y: e.clientY,
       }));
     } else if (row >= 0 && row < rows && col >= 0 && col < cols) {
-      isClick.current = false; // Not a single click if moving
+      isClick.current = false;
       const cells = lastMousePos.current
         ? getCellsBetween(
             lastMousePos.current.x,
@@ -213,7 +403,6 @@ export default function Board() {
     }
   };
 
-  // Update grid size based on window dimensions
   const updateGridSize = () => {
     const width = window.innerWidth;
     const height = window.innerHeight;
@@ -277,7 +466,6 @@ export default function Board() {
     setCellSize(baseCellSize);
   };
 
-  // Utility functions for random placement
   function getRandomRow(rows) {
     return getRandomNumber(0, rows - 1);
   }
@@ -290,7 +478,6 @@ export default function Board() {
     return Math.floor(Math.random() * (max - min + 1)) + min;
   }
 
-  // Initialize grid and handle resize
   useEffect(() => {
     updateGridSize();
     const debouncedUpdate = debounce(updateGridSize, 100);
@@ -298,17 +485,16 @@ export default function Board() {
     return () => window.removeEventListener("resize", debouncedUpdate);
   }, []);
 
-  // Place weighted node when weightedNode changes
   useEffect(() => {
     if (isInitialRender.current || !rows || !cols) {
       isInitialRender.current = false;
-      prevWeightedNode.current = weightedNode;
+      prevbombNode.current = bombNode;
       return;
     }
-    if (prevWeightedNode.current === weightedNode) {
+    if (prevbombNode.current === bombNode) {
       return;
     }
-    if (weightedNode === 0) {
+    if (bombNode === 0) {
       return;
     }
     let rowRandom = getRandomRow(rows);
@@ -327,8 +513,8 @@ export default function Board() {
         draft[rowRandom][colRandom] = 4;
       })
     );
-    prevWeightedNode.current = weightedNode;
-  }, [rows, cols, weightedNode, getRandomCol, getRandomRow]);
+    prevbombNode.current = bombNode;
+  }, [rows, cols, bombNode, getRandomCol, getRandomRow]);
 
   return (
     <div className="w-full h-full p-1 sm:p-2 md:p-3 flex justify-center relative">

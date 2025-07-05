@@ -2,7 +2,14 @@ import { useContext, useEffect, useState } from "react";
 import { WrapperContext } from "../wrapper";
 
 export default function Navbar() {
-  const { addWeightedNode } = useContext(WrapperContext);
+  const {
+    addBombNode,
+    startRecursiveDivision,
+    startRecursiveDivisionHorizontal,
+    startRecursiveDivisionVertical,
+    startRandomMaze,
+    startRandomMazeWithWeights,
+  } = useContext(WrapperContext);
 
   const [algorithmToggle, setAlgorithmToggle] = useState(true);
   const [mazeAndPatternsToggle, setmazeAndPatternsToggle] = useState(true);
@@ -77,10 +84,10 @@ export default function Navbar() {
             <div className="hidden lg:block">
               <div className="ml-10 flex items-baseline space-x-4">
                 <button
-                  onClick={addWeightedNode}
+                  onClick={addBombNode}
                   className="text-gray-300  hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium"
                 >
-                  Add Weights
+                  Add Bomb
                 </button>
 
                 <div className="relative">
@@ -159,36 +166,36 @@ export default function Navbar() {
                       mazeAndPatternsToggle && `hidden`
                     } absolute z-10 mt-2 w-48 rounded shadow-lg bg-gray-700`}
                   >
-                    <a
-                      href=""
+                    <button
+                      onClick={startRecursiveDivision}
                       className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-600 hover:text-white"
                     >
                       Recursive Division
-                    </a>
-                    <a
-                      href=""
+                    </button>
+                    <button
+                      onClick={startRecursiveDivisionVertical}
                       className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-600 hover:text-white"
                     >
                       Recursive Division (vertical skew)
-                    </a>
-                    <a
-                      href=""
+                    </button>
+                    <button
+                      onClick={startRecursiveDivisionHorizontal}
                       className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-600 hover:text-white"
                     >
                       Recursive Division (horizontal skew)
-                    </a>
-                    <a
-                      href=""
+                    </button>
+                    <button
+                      onClick={startRandomMaze}
                       className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-600 hover:text-white"
                     >
                       Basic Random Maze
-                    </a>
-                    <a
-                      href=""
+                    </button>
+                    <button
+                      onClick={startRandomMazeWithWeights}
                       className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-600 hover:text-white"
                     >
                       Basic Weight Maze
-                    </a>
+                    </button>
                     <a
                       href=""
                       className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-600 hover:text-white"
@@ -329,7 +336,7 @@ export default function Navbar() {
         >
           <div className="px-2 pt-16 pb-3 space-y-1 sm:px-3">
             <button
-              onClick={addWeightedNode}
+              onClick={addBombNode}
               className="text-gray-300  hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium"
             >
               Add Weights
@@ -408,36 +415,36 @@ export default function Navbar() {
                   mazeAndPatternsToggle && `hidden`
                 } pl-4 space-y-1`}
               >
-                <a
-                  href=""
+                <button
+                  onClick={startRecursiveDivision}
                   className="text-gray-300 hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium"
                 >
                   Recursive Division
-                </a>
-                <a
-                  href=""
+                </button>
+                <button
+                  onClick={startRecursiveDivisionVertical}
                   className="text-gray-300 hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium"
                 >
                   Recursive Division (vertical skew)
-                </a>
-                <a
-                  href=""
+                </button>
+                <button
+                  onClick={startRecursiveDivisionHorizontal}
                   className="text-gray-300 hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium"
                 >
                   Recursive Division (horizontal skew)
-                </a>
-                <a
-                  href=""
+                </button>
+                <button
+                  onClick={startRandomMaze}
                   className="text-gray-300 hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium"
                 >
                   Basic Random Maze
-                </a>
-                <a
-                  href=""
+                </button>
+                <button
+                  onClick={startRandomMazeWithWeights}
                   className="text-gray-300 hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium"
                 >
                   Basic Weight Maze
-                </a>
+                </button>
                 <a
                   href=""
                   className="text-gray-300 hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium"

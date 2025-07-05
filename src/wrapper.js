@@ -6,17 +6,52 @@ export const WrapperContext = createContext();
 
 // Create a provider component
 export const Wrapper = ({ children }) => {
-  const [weightedNode, setWeightedNode] = useState(0);
+  const [bombNode, setbombNode] = useState(0);
+  const [recursiveDivision, setRecursiveDivison] = useState(false);
+  const [recursiveDivisionHorizontal, setRecursiveDivisonHorizontal] =
+    useState(false);
+  const [recursiveDivisionVertical, setRecursiveDivisonVertical] =
+    useState(false);
+  const [randomMaze, setRandomMaze] = useState(false);
+  const [randomMazeWithWights, setRandomMazeWithWeights] = useState(false);
 
-  const addWeightedNode = () => {
-    setWeightedNode((cur) => cur + 1);
+  const addBombNode = () => {
+    setbombNode((cur) => cur + 1); // Correctly return the incremented value
+  };
+
+  const startRecursiveDivision = () => {
+    setRecursiveDivison((prev) => !prev);
+  };
+
+  const startRecursiveDivisionHorizontal = () => {
+    setRecursiveDivisonHorizontal((prev) => !prev);
+  };
+  const startRecursiveDivisionVertical = () => {
+    setRecursiveDivisonVertical((prev) => !prev);
+  };
+
+  const startRandomMaze = () => {
+    setRandomMaze((prev) => !prev);
+  };
+  const startRandomMazeWithWeights = () => {
+    setRandomMazeWithWeights((prev) => !prev);
   };
 
   return (
     <WrapperContext.Provider
       value={{
-        weightedNode,
-        addWeightedNode,
+        bombNode,
+        addBombNode,
+        recursiveDivision,
+        startRecursiveDivision,
+        recursiveDivisionHorizontal,
+        startRecursiveDivisionHorizontal,
+        recursiveDivisionVertical,
+        startRecursiveDivisionVertical,
+        randomMaze,
+        startRandomMaze,
+        randomMazeWithWights,
+        startRandomMazeWithWeights,
       }}
     >
       {children}
