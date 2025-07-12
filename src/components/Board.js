@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useContext } from "react";
 import produce from "immer";
 import Cell from "./Cell";
 import Image from "./Image";
-import triangleRight from "../icons/triangletwo-right.svg";
+import start from "../icons/start.svg";
 import circle from "../icons/circle.svg";
 import weight from "../icons/weight.svg";
 import bomb from "../icons/bomb.svg";
@@ -16,8 +16,17 @@ import clearBoard from "../function/clear/clearBoard";
 import generateClearBoard from "../function/clear/clearBoard";
 import generateClearBombs from "../function/clear/clearBombs";
 import generateClearWallsAndWeights from "../function/clear/clearWallsAndWeights";
+import generateBfs from "../function/algortihms/bfs";
+import { getOriginalType, getVisShade, isPath } from "../utils";
+import generateDfs from "../function/algortihms/dfs";
+import generateClearPath from "../function/clear";
+import generateDijkstra from "../function/algortihms/dijkstra";
+import generateGreedyBfs from "../function/algortihms/greedybfs";
+import generateAstar from "../function/algortihms/astar";
+import generateSwarm from "../function/algortihms/swarm";
+import generateConvergentSwarm from "../function/algortihms/convergentSwarm";
+import generateBidirectionalSwarm from "../function/algortihms/bidirectionalSwarm";
 
-// Debounce function for resize events
 const debounce = (func, wait) => {
   let timeout;
   return (...args) => {
@@ -26,7 +35,7 @@ const debounce = (func, wait) => {
   };
 };
 
-// Get all cells between two points to prevent gaps during fast mouse movement
+
 const getCellsBetween = (x0, y0, x1, y1, cellSize, rows, cols) => {
   const cells = [];
   const col0 = Math.floor(x0 / cellSize);
@@ -34,7 +43,7 @@ const getCellsBetween = (x0, y0, x1, y1, cellSize, rows, cols) => {
   const col1 = Math.floor(x1 / cellSize);
   const row1 = Math.floor(y1 / cellSize);
 
-  // Return empty if out of bounds
+
   if (
     row0 < 0 ||
     row0 >= rows ||
@@ -48,7 +57,7 @@ const getCellsBetween = (x0, y0, x1, y1, cellSize, rows, cols) => {
     return cells;
   }
 
-  // Interpolate cells using linear steps
+
   const dx = col1 - col0;
   const dy = row1 - row0;
   const steps = Math.max(Math.abs(dx), Math.abs(dy)) + 1;
@@ -66,9 +75,9 @@ const getCellsBetween = (x0, y0, x1, y1, cellSize, rows, cols) => {
 };
 
 let animated = [];
-
+let bombSquad = [];
 export default function Board() {
-  // State for grid and interaction
+
   const [dragging, setDragging] = useState(false);
   const [draggedNode, setDraggedNode] = useState(null);
   const [box, setBox] = useState([]);
@@ -94,6 +103,27 @@ export default function Board() {
     startClearBombs,
     clearWallsAndWeights,
     startClearWallsAdnWeights,
+    bfs,
+    setBfs,
+    dfs,
+    setDfs,
+    dijkstra,
+    setDijkstra,
+    astar,
+    setAstar,
+    greedyBfs,
+    setGreedyBfs,
+    swarm,
+    setSwarm,
+    convergentSwarm,
+    setConvergentSwarm,
+    bidirectionalSwarm,
+    setBidirectionalSwarm,
+    clearPath,
+    setClearPath,
+    setIsVisualizing,
+    pendingAlgo,
+    setPendingAlgo,
   } = useContext(WrapperContext);
   const gridRef = useRef(null);
   const isInitialRender = useRef(true);
@@ -102,7 +132,346 @@ export default function Board() {
   const isClick = useRef(false);
 
   ////////////////////////////////////////////////
+  useEffect(() => {
+    if (clearPath && rows > 0 && cols > 0 && box.length > 0) {
+      const { newGrid, animation } = generateClearPath(box, rows, cols);
+      let i = 0;
+      function animateStep() {
+        if (!Array.isArray(animation) || i >= animation.length) {
+          setBox(newGrid);
+          setClearPath(false);
+          if (pendingAlgo) {
+            if (pendingAlgo === "bfs") setBfs(true);
+            if (pendingAlgo === "dfs") setDfs(true);
+            if (pendingAlgo === "dijkstra") setDijkstra(true);
+            if (pendingAlgo === "astar") setAstar(true);
+            if (pendingAlgo === "greedybfs") setGreedyBfs(true);
+            if (pendingAlgo === "swarm") setSwarm(true);
+            if (pendingAlgo === "convergentSwarm") setConvergentSwarm(true);
+            if (pendingAlgo === "bidirectionalSwarm")
+              setBidirectionalSwarm(true);
 
+
+            setPendingAlgo(null);
+          }
+          return;
+        }
+        const cellUpdate = animation[i];
+        if (Array.isArray(cellUpdate) && cellUpdate.length === 3) {
+          setBox((prev) =>
+            produce(prev, (draft) => {
+              const [r, c, val] = cellUpdate;
+              draft[r][c] = val;
+            })
+          );
+        }
+        i++;
+        setTimeout(animateStep, 0.01); 
+      }
+      if (Array.isArray(animation) && animation.length > 0) {
+        animateStep();
+      } else if (newGrid) {
+        setBox(newGrid);
+        setClearPath(false);
+        if (pendingAlgo) {
+          if (pendingAlgo === "bfs") setBfs(true);
+          if (pendingAlgo === "dfs") setDfs(true);
+          if (pendingAlgo === "dijkstra") setDijkstra(true);
+          if (pendingAlgo === "astar") setAstar(true);
+          if (pendingAlgo === "greedybfs") setGreedyBfs(true);
+          if (pendingAlgo === "swarm") setSwarm(true);
+          if (pendingAlgo === "convergentSwarm") setConvergentSwarm(true);
+          if (pendingAlgo === "bidirectionalSwarm") setBidirectionalSwarm(true);
+          setPendingAlgo(null);
+        }
+      }
+    }
+  }, [
+    clearPath,
+    rows,
+    cols,
+    box.length,
+    pendingAlgo,
+    setPendingAlgo,
+    setBfs,
+    setDfs,
+    setDijkstra,
+    setAstar,
+    setGreedyBfs,
+    setSwarm,
+    setConvergentSwarm,
+    setBidirectionalSwarm ,
+  ]);
+
+  useEffect(() => {
+    if (bfs && rows > 0 && cols > 0 && box.length > 0) {
+      setIsVisualizing(true);
+      const { newGrid, animation } = generateBfs(box, rows, cols);
+      let i = 0;
+      function animateStep() {
+        if (!Array.isArray(animation) || i >= animation.length) {
+          setBox(newGrid);
+          setBfs(false);
+          setIsVisualizing(false);
+          return;
+        }
+        const cellUpdate = animation[i];
+        if (Array.isArray(cellUpdate) && cellUpdate.length === 3) {
+          setBox((prev) =>
+            produce(prev, (draft) => {
+              const [r, c, val] = cellUpdate;
+              draft[r][c] = val;
+            })
+          );
+        }
+        i++;
+        setTimeout(animateStep, 0.01);
+      }
+      if (Array.isArray(animation) && animation.length > 0) {
+        animateStep();
+      } else if (newGrid) {
+        setBox(newGrid);
+        setBfs(false);
+        setIsVisualizing(false);
+      }
+    }
+  }, [bfs, rows, cols, box.length]);
+  useEffect(() => {
+    if (dfs && rows > 0 && cols > 0 && box.length > 0) {
+      setIsVisualizing(true);
+      const { newGrid, animation } = generateDfs(box, rows, cols);
+      let i = 0;
+      function animateStep() {
+        if (!Array.isArray(animation) || i >= animation.length) {
+          setBox(newGrid);
+          setDfs(false);
+          setIsVisualizing(false);
+          return;
+        }
+        const cellUpdate = animation[i];
+        if (Array.isArray(cellUpdate) && cellUpdate.length === 3) {
+          setBox((prev) =>
+            produce(prev, (draft) => {
+              const [r, c, val] = cellUpdate;
+              draft[r][c] = val;
+            })
+          );
+        }
+        i++;
+        setTimeout(animateStep, 0.01);
+      }
+      if (Array.isArray(animation) && animation.length > 0) {
+        animateStep();
+      } else if (newGrid) {
+        setBox(newGrid);
+        setDfs(false);
+        setIsVisualizing(false);
+      }
+    }
+  }, [dfs, rows, cols, box.length]);
+  useEffect(() => {
+    if (dijkstra && rows > 0 && cols > 0 && box.length > 0) {
+      setIsVisualizing(true);
+      const { newGrid, animation } = generateDijkstra(box, rows, cols);
+      let i = 0;
+      function animateStep() {
+        if (!Array.isArray(animation) || i >= animation.length) {
+          setBox(newGrid);
+          setDijkstra(false);
+          setIsVisualizing(false);
+          return;
+        }
+        const cellUpdate = animation[i];
+        if (Array.isArray(cellUpdate) && cellUpdate.length === 3) {
+          setBox((prev) =>
+            produce(prev, (draft) => {
+              const [r, c, val] = cellUpdate;
+              draft[r][c] = val;
+            })
+          );
+        }
+        i++;
+        setTimeout(animateStep, 0.01);
+      }
+      if (Array.isArray(animation) && animation.length > 0) {
+        animateStep();
+      } else if (newGrid) {
+        setBox(newGrid);
+        setDijkstra(false);
+        setIsVisualizing(false);
+      }
+    }
+  }, [dijkstra, rows, cols, box.length]);
+  useEffect(() => {
+    if (greedyBfs && rows > 0 && cols > 0 && box.length > 0) {
+      setIsVisualizing(true);
+      const { newGrid, animation } = generateGreedyBfs(box, rows, cols);
+      let i = 0;
+      function animateStep() {
+        if (!Array.isArray(animation) || i >= animation.length) {
+          setBox(newGrid);
+          setGreedyBfs(false);
+          setIsVisualizing(false);
+          return;
+        }
+        const cellUpdate = animation[i];
+        if (Array.isArray(cellUpdate) && cellUpdate.length === 3) {
+          setBox((prev) =>
+            produce(prev, (draft) => {
+              const [r, c, val] = cellUpdate;
+              draft[r][c] = val;
+            })
+          );
+        }
+        i++;
+        setTimeout(animateStep, 0.01);
+      }
+      if (Array.isArray(animation) && animation.length > 0) {
+        animateStep();
+      } else if (newGrid) {
+        setBox(newGrid);
+        setGreedyBfs(false);
+        setIsVisualizing(false);
+      }
+    }
+  }, [greedyBfs, rows, cols, box.length]);
+  useEffect(() => {
+    if (astar && rows > 0 && cols > 0 && box.length > 0) {
+      setIsVisualizing(true);
+      const { newGrid, animation } = generateAstar(box, rows, cols);
+      let i = 0;
+      function animateStep() {
+        if (!Array.isArray(animation) || i >= animation.length) {
+          setBox(newGrid);
+          setAstar(false);
+          setIsVisualizing(false);
+          return;
+        }
+        const cellUpdate = animation[i];
+        if (Array.isArray(cellUpdate) && cellUpdate.length === 3) {
+          setBox((prev) =>
+            produce(prev, (draft) => {
+              const [r, c, val] = cellUpdate;
+              draft[r][c] = val;
+            })
+          );
+        }
+        i++;
+        setTimeout(animateStep, 0.01);
+      }
+      if (Array.isArray(animation) && animation.length > 0) {
+        animateStep();
+      } else if (newGrid) {
+        setBox(newGrid);
+        setAstar(false);
+        setIsVisualizing(false);
+      }
+    }
+  }, [astar, rows, cols, box.length]);
+  useEffect(() => {
+    if (swarm && rows > 0 && cols > 0 && box.length > 0) {
+      setIsVisualizing(true);
+      const { newGrid, animation } = generateSwarm(box, rows, cols);
+      let i = 0;
+      function animateStep() {
+        if (!Array.isArray(animation) || i >= animation.length) {
+          setBox(newGrid);
+          setSwarm(false);
+          setIsVisualizing(false);
+          return;
+        }
+        const cellUpdate = animation[i];
+        if (Array.isArray(cellUpdate) && cellUpdate.length === 3) {
+          setBox((prev) =>
+            produce(prev, (draft) => {
+              const [r, c, val] = cellUpdate;
+              draft[r][c] = val;
+            })
+          );
+        }
+        i++;
+        setTimeout(animateStep, 0.01);
+      }
+      if (Array.isArray(animation) && animation.length > 0) {
+        animateStep();
+      } else if (newGrid) {
+        setBox(newGrid);
+        setSwarm(false);
+        setIsVisualizing(false);
+      }
+    }
+  }, [swarm, rows, cols, box.length]);
+
+  useEffect(() => {
+    if (convergentSwarm && rows > 0 && cols > 0 && box.length > 0) {
+      setIsVisualizing(true);
+      const { newGrid, animation } = generateConvergentSwarm(box, rows, cols);
+      let i = 0;
+      function animateStep() {
+        if (!Array.isArray(animation) || i >= animation.length) {
+          setBox(newGrid);
+          setConvergentSwarm(false);
+          setIsVisualizing(false);
+          return;
+        }
+        const cellUpdate = animation[i];
+        if (Array.isArray(cellUpdate) && cellUpdate.length === 3) {
+          setBox((prev) =>
+            produce(prev, (draft) => {
+              const [r, c, val] = cellUpdate;
+              draft[r][c] = val;
+            })
+          );
+        }
+        i++;
+        setTimeout(animateStep, 0.01);
+      }
+      if (Array.isArray(animation) && animation.length > 0) {
+        animateStep();
+      } else if (newGrid) {
+        setBox(newGrid);
+        setConvergentSwarm(false);
+        setIsVisualizing(false);
+      }
+    }
+  }, [convergentSwarm, rows, cols, box.length]);
+  useEffect(() => {
+    if (bidirectionalSwarm && rows > 0 && cols > 0 && box.length > 0) {
+      setIsVisualizing(true);
+      const { newGrid, animation } = generateBidirectionalSwarm(
+        box,
+        rows,
+        cols
+      );
+      let i = 0;
+      function animateStep() {
+        if (!Array.isArray(animation) || i >= animation.length) {
+          setBox(newGrid);
+          setBidirectionalSwarm(false);
+          setIsVisualizing(false);
+          return;
+        }
+        const cellUpdate = animation[i];
+        if (Array.isArray(cellUpdate) && cellUpdate.length === 3) {
+          setBox((prev) =>
+            produce(prev, (draft) => {
+              const [r, c, val] = cellUpdate;
+              draft[r][c] = val;
+            })
+          );
+        }
+        i++;
+        setTimeout(animateStep, 0.01);
+      }
+      if (Array.isArray(animation) && animation.length > 0) {
+        animateStep();
+      } else if (newGrid) {
+        setBox(newGrid);
+        setBidirectionalSwarm(false);
+        setIsVisualizing(false);
+      }
+    }
+  }, [bidirectionalSwarm, rows, cols, box.length]);
   useEffect(() => {
     if (recursiveDivision && rows > 0 && cols > 0 && box.length > 0) {
       const { newGrid, animation } = generateMaze(box, rows, cols);
@@ -419,12 +788,9 @@ export default function Board() {
     setBox(
       produce((draft) => {
         cells.forEach(([row, col]) => {
-          if (
-            draft[row][col] !== 2 &&
-            draft[row][col] !== 3 &&
-            draft[row][col] !== 4
-          ) {
-            draft[row][col] = draft[row][col] === 0 ? 1 : 0;
+          const originalType = getOriginalType(draft[row][col]);
+          if (originalType !== 2 && originalType !== 3 && originalType !== 4) {
+            draft[row][col] = originalType === 1 ? 0 : 1;
           }
         });
       })
@@ -448,8 +814,9 @@ export default function Board() {
     const col = Math.floor(x / cellSize);
     const row = Math.floor(y / cellSize);
     if (row >= 0 && row < rows && col >= 0 && col < cols) {
-      if (box[row][col] === 2 || box[row][col] === 3 || box[row][col] === 4) {
-        startNodeDrag(row, col, box[row][col], e.clientX, e.clientY);
+      const originalType = getOriginalType(box[row][col]);
+      if (originalType === 2 || originalType === 3 || originalType === 4) {
+        startNodeDrag(row, col, originalType, e.clientX, e.clientY);
       } else {
         setDragging(true);
         isClick.current = true;
@@ -499,9 +866,9 @@ export default function Board() {
       return;
     }
     if (
-      box[targetRow][targetCol] === 2 ||
-      box[targetRow][targetCol] === 3 ||
-      box[targetRow][targetCol] === 4
+      getOriginalType(box[targetRow][targetCol]) === 2 ||
+      getOriginalType(box[targetRow][targetCol]) === 3 ||
+      getOriginalType(box[targetRow][targetCol]) === 4
     ) {
       setDraggedNode(null);
       isClick.current = false;
@@ -509,7 +876,15 @@ export default function Board() {
     }
     setBox(
       produce((draft) => {
-        draft[draggedNode.row][draggedNode.col] = 0;
+        const currentCell = box[draggedNode.row][draggedNode.col];
+        let oldVal = 0;
+        const shade = getVisShade(currentCell);
+        if (shade > -1) {
+          oldVal = 6 + shade; // For visited empty
+        } else if (isPath(currentCell)) {
+          oldVal = 12; // For path empty
+        }
+        draft[draggedNode.row][draggedNode.col] = oldVal;
         draft[targetRow][targetCol] = draggedNode.type;
       })
     );
@@ -659,6 +1034,8 @@ export default function Board() {
           colRandom = getRandomCol(cols);
         }
         draft[rowRandom][colRandom] = 4;
+        bombSquad.push([rowRandom, colRandom]);
+        console.log(bombSquad);
       })
     );
     prevbombNode.current = bombNode;
@@ -708,7 +1085,7 @@ export default function Board() {
           }}
         >
           {draggedNode.type === 2 && (
-            <Image src={triangleRight} width="100%" height="100%" />
+            <Image src={start} width="100%" height="100%" />
           )}
           {draggedNode.type === 3 && (
             <Image src={circle} width="100%" height="100%" />

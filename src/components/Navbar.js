@@ -13,6 +13,14 @@ export default function Navbar() {
     startClearBoard,
     startClearBombs,
     startClearWallsAdnWeights,
+    startBfs,
+    startDfs,
+    startDijkstra,
+    startAstar,
+    startGreedyBfs,
+    startSwarm,
+    startConvergentSwarm,
+    startBidirectionalSwarm,
   } = useContext(WrapperContext);
 
   const [algorithmToggle, setAlgorithmToggle] = useState(true);
@@ -122,24 +130,54 @@ export default function Navbar() {
                       algorithmToggle && `hidden`
                     } absolute z-10 mt-2 w-48 rounded shadow-lg bg-gray-700`}
                   >
-                    <a
-                      href=""
+                    <button
+                      onClick={startBfs}
                       className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-600 hover:text-white"
                     >
-                      Algorithm 1
-                    </a>
-                    <a
-                      href=""
+                      BFS
+                    </button>
+                    <button
+                      onClick={startDfs}
                       className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-600 hover:text-white"
                     >
-                      Algorithm 2
-                    </a>
-                    <a
-                      href=""
+                      DFS
+                    </button>
+                    <button
+                      onClick={startDijkstra}
                       className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-600 hover:text-white"
                     >
-                      Algorithm 3
-                    </a>
+                      Dijkstra's Algorithm
+                    </button>
+                    <button
+                      onClick={startAstar}
+                      className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-600 hover:text-white"
+                    >
+                      A* Algorithm
+                    </button>
+                    <button
+                      onClick={startGreedyBfs}
+                      className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-600 hover:text-white"
+                    >
+                      Greedy Best-First Search
+                    </button>
+                    <button
+                      onClick={startSwarm}
+                      className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-600 hover:text-white"
+                    >
+                      Swarm Algorithm
+                    </button>
+                    <button
+                      onClick={startConvergentSwarm}
+                      className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-600 hover:text-white"
+                    >
+                      Convergent Swarm Algorithm
+                    </button>
+                    <button
+                      onClick={startBidirectionalSwarm}
+                      className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-600 hover:text-white"
+                    >
+                      Bi-Directional Swarm Algorithm
+                    </button>
                   </div>
                 </div>
                 <div className="relative">
