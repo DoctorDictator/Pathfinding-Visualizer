@@ -21,6 +21,7 @@ export default function Navbar() {
     startSwarm,
     startConvergentSwarm,
     startBidirectionalSwarm,
+    isVisualizing,
   } = useContext(WrapperContext);
 
   const [algorithmToggle, setAlgorithmToggle] = useState(true);
@@ -28,7 +29,9 @@ export default function Navbar() {
   const [speedToggle, setSpeedToggle] = useState(true);
   const [clearToggle, setClearToggle] = useState(true);
   const [menuToggle, setMenuToggle] = useState(true);
-
+  const [algorithm, setAlgorithm] = useState("");
+  const [currentAlgo, setCurrentAlgo] = useState("");
+  const [startAlgo, setStartAlgo] = useState(false);
   function toggleMenu(e) {
     e.stopPropagation();
     setMenuToggle((prevState) => !prevState);
@@ -83,6 +86,65 @@ export default function Navbar() {
     };
   }, []);
 
+  useEffect(() => {
+    if (algorithm === "bfs") {
+      setCurrentAlgo("Breadth First Search");
+      if (startAlgo && algorithm === "bfs" && !isVisualizing) {
+        startBfs();
+        startAlgo(false);
+      }
+    }
+    if (algorithm === "dfs") {
+      setCurrentAlgo("Depth First Search");
+      if (startAlgo && algorithm === "dfs" && !isVisualizing) {
+        startDfs();
+        setStartAlgo(false);
+      }
+    }
+    if (algorithm === "dijkstra") {
+      setCurrentAlgo("Dijkstra");
+      if (startAlgo && algorithm === "dijkstra" && !isVisualizing) {
+        startDijkstra();
+        setStartAlgo(false);
+      }
+    }
+    if (algorithm === "astar") {
+      setCurrentAlgo("A*");
+      if (startAlgo && algorithm === "astar" && !isVisualizing) {
+        startAstar();
+        setStartAlgo(false);
+      }
+    }
+    if (algorithm === "greedyBfs") {
+      setCurrentAlgo("Greedy Best-First Search");
+      if (startAlgo && algorithm === "greedyBfs" && !isVisualizing) {
+        startGreedyBfs();
+        setStartAlgo(false);
+      }
+    }
+    if (algorithm === "swarm") {
+      setCurrentAlgo("Swarm");
+      if (startAlgo && algorithm === "swarm" && !isVisualizing) {
+        startSwarm();
+        setStartAlgo(false);
+      }
+    }
+    if (algorithm === "convergentSwarm") {
+      setCurrentAlgo("Convergent Swarm");
+      if (startAlgo && algorithm === "convergentSwarm" && !isVisualizing) {
+        startConvergentSwarm();
+        setStartAlgo(false);
+      }
+    }
+    if (algorithm === "bidirectionalSwarm") {
+      setCurrentAlgo("Bidirectional Swarm");
+      if (startAlgo && algorithm === "bidirectionalSwarm" && !isVisualizing) {
+        startBidirectionalSwarm();
+        setStartAlgo(false);
+      }
+    }
+  }, [algorithm, startAlgo]);
+
   return (
     <>
       <nav className="bg-gray-800 w-max-3xl">
@@ -131,49 +193,65 @@ export default function Navbar() {
                     } absolute z-10 mt-2 w-48 rounded shadow-lg bg-gray-700`}
                   >
                     <button
-                      onClick={startBfs}
+                      onClick={() => {
+                        setAlgorithm("bfs");
+                      }}
                       className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-600 hover:text-white"
                     >
-                      BFS
+                      Breadth First Search
                     </button>
                     <button
-                      onClick={startDfs}
+                      onClick={() => {
+                        setAlgorithm("dfs");
+                      }}
                       className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-600 hover:text-white"
                     >
-                      DFS
+                      Depth First Search
                     </button>
                     <button
-                      onClick={startDijkstra}
+                      onClick={() => {
+                        setAlgorithm("dijkstra");
+                      }}
                       className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-600 hover:text-white"
                     >
                       Dijkstra's Algorithm
                     </button>
                     <button
-                      onClick={startAstar}
+                      onClick={() => {
+                        setAlgorithm("astar");
+                      }}
                       className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-600 hover:text-white"
                     >
                       A* Algorithm
                     </button>
                     <button
-                      onClick={startGreedyBfs}
+                      onClick={() => {
+                        setAlgorithm("greedyBfs");
+                      }}
                       className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-600 hover:text-white"
                     >
                       Greedy Best-First Search
                     </button>
                     <button
-                      onClick={startSwarm}
+                      onClick={() => {
+                        setAlgorithm("swarm");
+                      }}
                       className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-600 hover:text-white"
                     >
                       Swarm Algorithm
                     </button>
                     <button
-                      onClick={startConvergentSwarm}
+                      onClick={() => {
+                        setAlgorithm("convergentSwarm");
+                      }}
                       className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-600 hover:text-white"
                     >
                       Convergent Swarm Algorithm
                     </button>
                     <button
-                      onClick={startBidirectionalSwarm}
+                      onClick={() => {
+                        setAlgorithm("bidirectionalSwarm");
+                      }}
                       className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-600 hover:text-white"
                     >
                       Bi-Directional Swarm Algorithm
@@ -238,12 +316,6 @@ export default function Navbar() {
                     >
                       Basic Weight Maze
                     </button>
-                    <a
-                      href=""
-                      className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-600 hover:text-white"
-                    >
-                      Simple Stair Pattern
-                    </a>
                   </div>
                 </div>
                 <div className="relative">
@@ -348,8 +420,11 @@ export default function Navbar() {
                     </button>
                   </div>
                 </div>
-                <button className="text-white bg-yellow-300 hover:bg-gray-700 hover:text-white px-10 py-2 rounded-md text-sm font-medium">
-                  Visualize
+                <button
+                  onClick={() => setStartAlgo(true)}
+                  className="text-white bg-yellow-300 hover:bg-gray-700 hover:text-white px-10 py-2 rounded-md text-sm font-medium"
+                >
+                  Visualize {currentAlgo}
                 </button>
               </div>
             </div>
@@ -415,24 +490,70 @@ export default function Navbar() {
                 id="mobile-algorithm-dropdown"
                 className={`${algorithmToggle && `hidden`} pl-4 space-y-1`}
               >
-                <a
-                  href=""
+                <button
+                  onClick={() => {
+                    setAlgorithm("bfs");
+                  }}
                   className="text-gray-300 hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium"
                 >
-                  Algorithm 1
-                </a>
-                <a
-                  href=""
+                  Breadth First Search
+                </button>
+                <button
+                  onClick={() => {
+                    setAlgorithm("dfs");
+                  }}
                   className="text-gray-300 hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium"
                 >
-                  Algorithm 2
-                </a>
-                <a
-                  href=""
+                  Depth First Search
+                </button>
+                <button
+                  onClick={() => {
+                    setAlgorithm("dijkstra");
+                  }}
                   className="text-gray-300 hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium"
                 >
-                  Algorithm 3
-                </a>
+                  Dijkstra's Algorithm
+                </button>
+                <button
+                  onClick={() => {
+                    setAlgorithm("astar");
+                  }}
+                  className="text-gray-300 hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium"
+                >
+                  A* Algorithm
+                </button>
+                <button
+                  onClick={() => {
+                    setAlgorithm("greedyBfs");
+                  }}
+                  className="text-gray-300 hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium"
+                >
+                  Greedy Best-First Search
+                </button>
+                <button
+                  onClick={() => {
+                    setAlgorithm("swarm");
+                  }}
+                  className="text-gray-300 hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium"
+                >
+                  Swarm Algorithm
+                </button>
+                <button
+                  onClick={() => {
+                    setAlgorithm("convergentSwarm");
+                  }}
+                  className="text-gray-300 hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium"
+                >
+                  Convergent Swarm Algorithm
+                </button>
+                <button
+                  onClick={() => {
+                    setAlgorithm("bidirectionalSwarm");
+                  }}
+                  className="text-gray-300 hover:bg-gray-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium"
+                >
+                  Bi-Directional Swarm Algorithm
+                </button>
               </div>
             </div>
             <div>
