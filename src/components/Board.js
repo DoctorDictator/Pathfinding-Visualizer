@@ -35,14 +35,12 @@ const debounce = (func, wait) => {
   };
 };
 
-
 const getCellsBetween = (x0, y0, x1, y1, cellSize, rows, cols) => {
   const cells = [];
   const col0 = Math.floor(x0 / cellSize);
   const row0 = Math.floor(y0 / cellSize);
   const col1 = Math.floor(x1 / cellSize);
   const row1 = Math.floor(y1 / cellSize);
-
 
   if (
     row0 < 0 ||
@@ -56,7 +54,6 @@ const getCellsBetween = (x0, y0, x1, y1, cellSize, rows, cols) => {
   ) {
     return cells;
   }
-
 
   const dx = col1 - col0;
   const dy = row1 - row0;
@@ -77,7 +74,6 @@ const getCellsBetween = (x0, y0, x1, y1, cellSize, rows, cols) => {
 let animated = [];
 let bombSquad = [];
 export default function Board() {
-
   const [dragging, setDragging] = useState(false);
   const [draggedNode, setDraggedNode] = useState(null);
   const [box, setBox] = useState([]);
@@ -102,7 +98,7 @@ export default function Board() {
     clearBombs,
     startClearBombs,
     clearWallsAndWeights,
-    startClearWallsAdnWeights,
+    startClearWallsAndWeights,
     bfs,
     setBfs,
     dfs,
@@ -124,18 +120,32 @@ export default function Board() {
     setIsVisualizing,
     pendingAlgo,
     setPendingAlgo,
+    lastAlgo,
+    setLastAlgo,
   } = useContext(WrapperContext);
   const gridRef = useRef(null);
   const isInitialRender = useRef(true);
-  const prevbombNode = useRef(null);
+  const prevBombNode = useRef(null);
   const lastMousePos = useRef(null);
   const isClick = useRef(false);
+
+  const algoMap = {
+    bfs: generateBfs,
+    dfs: generateDfs,
+    dijkstra: generateDijkstra,
+    astar: generateAstar,
+    greedyBfs: generateGreedyBfs,
+    swarm: generateSwarm,
+    convergentSwarm: generateConvergentSwarm,
+    bidirectionalSwarm: generateBidirectionalSwarm,
+  };
 
   ////////////////////////////////////////////////
   useEffect(() => {
     if (clearPath && rows > 0 && cols > 0 && box.length > 0) {
       const { newGrid, animation } = generateClearPath(box, rows, cols);
       let i = 0;
+      const batchSize = 30;
       function animateStep() {
         if (!Array.isArray(animation) || i >= animation.length) {
           setBox(newGrid);
@@ -151,22 +161,27 @@ export default function Board() {
             if (pendingAlgo === "bidirectionalSwarm")
               setBidirectionalSwarm(true);
 
-
             setPendingAlgo(null);
           }
           return;
         }
-        const cellUpdate = animation[i];
-        if (Array.isArray(cellUpdate) && cellUpdate.length === 3) {
+        let updates = [];
+        for (let j = 0; j < batchSize && i < animation.length; j++, i++) {
+          const cellUpdate = animation[i];
+          if (Array.isArray(cellUpdate) && cellUpdate.length === 3) {
+            updates.push(cellUpdate);
+          }
+        }
+        if (updates.length > 0) {
           setBox((prev) =>
             produce(prev, (draft) => {
-              const [r, c, val] = cellUpdate;
-              draft[r][c] = val;
+              updates.forEach(([r, c, val]) => {
+                draft[r][c] = val;
+              });
             })
           );
         }
-        i++;
-        setTimeout(animateStep, 0.01); 
+        requestAnimationFrame(animateStep);
       }
       if (Array.isArray(animation) && animation.length > 0) {
         animateStep();
@@ -200,14 +215,16 @@ export default function Board() {
     setGreedyBfs,
     setSwarm,
     setConvergentSwarm,
-    setBidirectionalSwarm ,
+    setBidirectionalSwarm,
   ]);
 
   useEffect(() => {
     if (bfs && rows > 0 && cols > 0 && box.length > 0) {
+      setLastAlgo("bfs");
       setIsVisualizing(true);
       const { newGrid, animation } = generateBfs(box, rows, cols);
       let i = 0;
+      const batchSize = 30; // Adjust batch size for speed
       function animateStep() {
         if (!Array.isArray(animation) || i >= animation.length) {
           setBox(newGrid);
@@ -215,17 +232,23 @@ export default function Board() {
           setIsVisualizing(false);
           return;
         }
-        const cellUpdate = animation[i];
-        if (Array.isArray(cellUpdate) && cellUpdate.length === 3) {
+        let updates = [];
+        for (let j = 0; j < batchSize && i < animation.length; j++, i++) {
+          const cellUpdate = animation[i];
+          if (Array.isArray(cellUpdate) && cellUpdate.length === 3) {
+            updates.push(cellUpdate);
+          }
+        }
+        if (updates.length > 0) {
           setBox((prev) =>
             produce(prev, (draft) => {
-              const [r, c, val] = cellUpdate;
-              draft[r][c] = val;
+              updates.forEach(([r, c, val]) => {
+                draft[r][c] = val;
+              });
             })
           );
         }
-        i++;
-        setTimeout(animateStep, 0.01);
+        requestAnimationFrame(animateStep);
       }
       if (Array.isArray(animation) && animation.length > 0) {
         animateStep();
@@ -236,11 +259,14 @@ export default function Board() {
       }
     }
   }, [bfs, rows, cols, box.length]);
+
   useEffect(() => {
     if (dfs && rows > 0 && cols > 0 && box.length > 0) {
+      setLastAlgo("dfs");
       setIsVisualizing(true);
       const { newGrid, animation } = generateDfs(box, rows, cols);
       let i = 0;
+      const batchSize = 30;
       function animateStep() {
         if (!Array.isArray(animation) || i >= animation.length) {
           setBox(newGrid);
@@ -248,17 +274,23 @@ export default function Board() {
           setIsVisualizing(false);
           return;
         }
-        const cellUpdate = animation[i];
-        if (Array.isArray(cellUpdate) && cellUpdate.length === 3) {
+        let updates = [];
+        for (let j = 0; j < batchSize && i < animation.length; j++, i++) {
+          const cellUpdate = animation[i];
+          if (Array.isArray(cellUpdate) && cellUpdate.length === 3) {
+            updates.push(cellUpdate);
+          }
+        }
+        if (updates.length > 0) {
           setBox((prev) =>
             produce(prev, (draft) => {
-              const [r, c, val] = cellUpdate;
-              draft[r][c] = val;
+              updates.forEach(([r, c, val]) => {
+                draft[r][c] = val;
+              });
             })
           );
         }
-        i++;
-        setTimeout(animateStep, 0.01);
+        requestAnimationFrame(animateStep);
       }
       if (Array.isArray(animation) && animation.length > 0) {
         animateStep();
@@ -269,11 +301,14 @@ export default function Board() {
       }
     }
   }, [dfs, rows, cols, box.length]);
+
   useEffect(() => {
     if (dijkstra && rows > 0 && cols > 0 && box.length > 0) {
+      setLastAlgo("dijkstra");
       setIsVisualizing(true);
       const { newGrid, animation } = generateDijkstra(box, rows, cols);
       let i = 0;
+      const batchSize = 30;
       function animateStep() {
         if (!Array.isArray(animation) || i >= animation.length) {
           setBox(newGrid);
@@ -281,17 +316,23 @@ export default function Board() {
           setIsVisualizing(false);
           return;
         }
-        const cellUpdate = animation[i];
-        if (Array.isArray(cellUpdate) && cellUpdate.length === 3) {
+        let updates = [];
+        for (let j = 0; j < batchSize && i < animation.length; j++, i++) {
+          const cellUpdate = animation[i];
+          if (Array.isArray(cellUpdate) && cellUpdate.length === 3) {
+            updates.push(cellUpdate);
+          }
+        }
+        if (updates.length > 0) {
           setBox((prev) =>
             produce(prev, (draft) => {
-              const [r, c, val] = cellUpdate;
-              draft[r][c] = val;
+              updates.forEach(([r, c, val]) => {
+                draft[r][c] = val;
+              });
             })
           );
         }
-        i++;
-        setTimeout(animateStep, 0.01);
+        requestAnimationFrame(animateStep);
       }
       if (Array.isArray(animation) && animation.length > 0) {
         animateStep();
@@ -302,11 +343,14 @@ export default function Board() {
       }
     }
   }, [dijkstra, rows, cols, box.length]);
+
   useEffect(() => {
     if (greedyBfs && rows > 0 && cols > 0 && box.length > 0) {
+      setLastAlgo("greedyBfs");
       setIsVisualizing(true);
       const { newGrid, animation } = generateGreedyBfs(box, rows, cols);
       let i = 0;
+      const batchSize = 30;
       function animateStep() {
         if (!Array.isArray(animation) || i >= animation.length) {
           setBox(newGrid);
@@ -314,17 +358,23 @@ export default function Board() {
           setIsVisualizing(false);
           return;
         }
-        const cellUpdate = animation[i];
-        if (Array.isArray(cellUpdate) && cellUpdate.length === 3) {
+        let updates = [];
+        for (let j = 0; j < batchSize && i < animation.length; j++, i++) {
+          const cellUpdate = animation[i];
+          if (Array.isArray(cellUpdate) && cellUpdate.length === 3) {
+            updates.push(cellUpdate);
+          }
+        }
+        if (updates.length > 0) {
           setBox((prev) =>
             produce(prev, (draft) => {
-              const [r, c, val] = cellUpdate;
-              draft[r][c] = val;
+              updates.forEach(([r, c, val]) => {
+                draft[r][c] = val;
+              });
             })
           );
         }
-        i++;
-        setTimeout(animateStep, 0.01);
+        requestAnimationFrame(animateStep);
       }
       if (Array.isArray(animation) && animation.length > 0) {
         animateStep();
@@ -335,11 +385,14 @@ export default function Board() {
       }
     }
   }, [greedyBfs, rows, cols, box.length]);
+
   useEffect(() => {
     if (astar && rows > 0 && cols > 0 && box.length > 0) {
+      setLastAlgo("astar");
       setIsVisualizing(true);
       const { newGrid, animation } = generateAstar(box, rows, cols);
       let i = 0;
+      const batchSize = 30;
       function animateStep() {
         if (!Array.isArray(animation) || i >= animation.length) {
           setBox(newGrid);
@@ -347,17 +400,23 @@ export default function Board() {
           setIsVisualizing(false);
           return;
         }
-        const cellUpdate = animation[i];
-        if (Array.isArray(cellUpdate) && cellUpdate.length === 3) {
+        let updates = [];
+        for (let j = 0; j < batchSize && i < animation.length; j++, i++) {
+          const cellUpdate = animation[i];
+          if (Array.isArray(cellUpdate) && cellUpdate.length === 3) {
+            updates.push(cellUpdate);
+          }
+        }
+        if (updates.length > 0) {
           setBox((prev) =>
             produce(prev, (draft) => {
-              const [r, c, val] = cellUpdate;
-              draft[r][c] = val;
+              updates.forEach(([r, c, val]) => {
+                draft[r][c] = val;
+              });
             })
           );
         }
-        i++;
-        setTimeout(animateStep, 0.01);
+        requestAnimationFrame(animateStep);
       }
       if (Array.isArray(animation) && animation.length > 0) {
         animateStep();
@@ -368,11 +427,14 @@ export default function Board() {
       }
     }
   }, [astar, rows, cols, box.length]);
+
   useEffect(() => {
     if (swarm && rows > 0 && cols > 0 && box.length > 0) {
+      setLastAlgo("swarm");
       setIsVisualizing(true);
       const { newGrid, animation } = generateSwarm(box, rows, cols);
       let i = 0;
+      const batchSize = 30;
       function animateStep() {
         if (!Array.isArray(animation) || i >= animation.length) {
           setBox(newGrid);
@@ -380,17 +442,23 @@ export default function Board() {
           setIsVisualizing(false);
           return;
         }
-        const cellUpdate = animation[i];
-        if (Array.isArray(cellUpdate) && cellUpdate.length === 3) {
+        let updates = [];
+        for (let j = 0; j < batchSize && i < animation.length; j++, i++) {
+          const cellUpdate = animation[i];
+          if (Array.isArray(cellUpdate) && cellUpdate.length === 3) {
+            updates.push(cellUpdate);
+          }
+        }
+        if (updates.length > 0) {
           setBox((prev) =>
             produce(prev, (draft) => {
-              const [r, c, val] = cellUpdate;
-              draft[r][c] = val;
+              updates.forEach(([r, c, val]) => {
+                draft[r][c] = val;
+              });
             })
           );
         }
-        i++;
-        setTimeout(animateStep, 0.01);
+        requestAnimationFrame(animateStep);
       }
       if (Array.isArray(animation) && animation.length > 0) {
         animateStep();
@@ -404,9 +472,11 @@ export default function Board() {
 
   useEffect(() => {
     if (convergentSwarm && rows > 0 && cols > 0 && box.length > 0) {
+      setLastAlgo("convergentSwarm");
       setIsVisualizing(true);
       const { newGrid, animation } = generateConvergentSwarm(box, rows, cols);
       let i = 0;
+      const batchSize = 30;
       function animateStep() {
         if (!Array.isArray(animation) || i >= animation.length) {
           setBox(newGrid);
@@ -414,17 +484,23 @@ export default function Board() {
           setIsVisualizing(false);
           return;
         }
-        const cellUpdate = animation[i];
-        if (Array.isArray(cellUpdate) && cellUpdate.length === 3) {
+        let updates = [];
+        for (let j = 0; j < batchSize && i < animation.length; j++, i++) {
+          const cellUpdate = animation[i];
+          if (Array.isArray(cellUpdate) && cellUpdate.length === 3) {
+            updates.push(cellUpdate);
+          }
+        }
+        if (updates.length > 0) {
           setBox((prev) =>
             produce(prev, (draft) => {
-              const [r, c, val] = cellUpdate;
-              draft[r][c] = val;
+              updates.forEach(([r, c, val]) => {
+                draft[r][c] = val;
+              });
             })
           );
         }
-        i++;
-        setTimeout(animateStep, 0.01);
+        requestAnimationFrame(animateStep);
       }
       if (Array.isArray(animation) && animation.length > 0) {
         animateStep();
@@ -435,8 +511,10 @@ export default function Board() {
       }
     }
   }, [convergentSwarm, rows, cols, box.length]);
+
   useEffect(() => {
     if (bidirectionalSwarm && rows > 0 && cols > 0 && box.length > 0) {
+      setLastAlgo("bidirectionalSwarm");
       setIsVisualizing(true);
       const { newGrid, animation } = generateBidirectionalSwarm(
         box,
@@ -444,6 +522,7 @@ export default function Board() {
         cols
       );
       let i = 0;
+      const batchSize = 30;
       function animateStep() {
         if (!Array.isArray(animation) || i >= animation.length) {
           setBox(newGrid);
@@ -451,17 +530,23 @@ export default function Board() {
           setIsVisualizing(false);
           return;
         }
-        const cellUpdate = animation[i];
-        if (Array.isArray(cellUpdate) && cellUpdate.length === 3) {
+        let updates = [];
+        for (let j = 0; j < batchSize && i < animation.length; j++, i++) {
+          const cellUpdate = animation[i];
+          if (Array.isArray(cellUpdate) && cellUpdate.length === 3) {
+            updates.push(cellUpdate);
+          }
+        }
+        if (updates.length > 0) {
           setBox((prev) =>
             produce(prev, (draft) => {
-              const [r, c, val] = cellUpdate;
-              draft[r][c] = val;
+              updates.forEach(([r, c, val]) => {
+                draft[r][c] = val;
+              });
             })
           );
         }
-        i++;
-        setTimeout(animateStep, 0.01);
+        requestAnimationFrame(animateStep);
       }
       if (Array.isArray(animation) && animation.length > 0) {
         animateStep();
@@ -472,6 +557,7 @@ export default function Board() {
       }
     }
   }, [bidirectionalSwarm, rows, cols, box.length]);
+
   useEffect(() => {
     if (recursiveDivision && rows > 0 && cols > 0 && box.length > 0) {
       const { newGrid, animation } = generateMaze(box, rows, cols);
@@ -666,7 +752,7 @@ export default function Board() {
     }
   }, [randomMazeWithWeights, rows, cols, box.length]);
 
-  ///////////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////
 
   useEffect(() => {
     if (clearBoard && rows > 0 && cols > 0 && box.length > 0) {
@@ -704,7 +790,7 @@ export default function Board() {
     }
   }, [clearBoard, rows, cols, box.length]);
 
-  ////////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////
 
   useEffect(() => {
     if (clearBombs && rows > 0 && cols > 0 && box.length > 0) {
@@ -776,10 +862,10 @@ export default function Board() {
 
       if (Array.isArray(animation) && animation.length > 0) {
         animateStep();
-        startClearWallsAdnWeights();
+        startClearWallsAndWeights();
       } else if (newGrid) {
         setBox(newGrid);
-        startClearWallsAdnWeights();
+        startClearWallsAndWeights();
       }
     }
   }, [clearWallsAndWeights, rows, cols, box.length]);
@@ -874,20 +960,29 @@ export default function Board() {
       isClick.current = false;
       return;
     }
-    setBox(
-      produce((draft) => {
-        const currentCell = box[draggedNode.row][draggedNode.col];
-        let oldVal = 0;
-        const shade = getVisShade(currentCell);
-        if (shade > -1) {
-          oldVal = 6 + shade; // For visited empty
-        } else if (isPath(currentCell)) {
-          oldVal = 12; // For path empty
+    const clearedGrid = produce(box, (draft) => {
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          const val = draft[r][c];
+          if (getVisShade(val) > -1) {
+            draft[r][c] = getOriginalType(val);
+          } else if (isPath(val)) {
+            draft[r][c] = getOriginalType(val);
+          }
         }
-        draft[draggedNode.row][draggedNode.col] = oldVal;
-        draft[targetRow][targetCol] = draggedNode.type;
-      })
-    );
+      }
+    });
+    const newBoxAfterMove = produce(clearedGrid, (draft) => {
+      draft[draggedNode.row][draggedNode.col] = 0;
+      draft[targetRow][targetCol] = draggedNode.type;
+    });
+    let finalGrid = newBoxAfterMove;
+    if (lastAlgo && algoMap[lastAlgo]) {
+      const generateFunc = algoMap[lastAlgo];
+      const { newGrid } = generateFunc(newBoxAfterMove, rows, cols);
+      finalGrid = newGrid;
+    }
+    setBox(finalGrid);
     setDraggedNode(null);
     isClick.current = false;
   };
@@ -930,6 +1025,9 @@ export default function Board() {
     const width = window.innerWidth;
     const height = window.innerHeight;
     const isWide = width > height;
+    const margin = width < 640 ? 16 : width < 768 ? 24 : 32;
+    const availableWidth = width - 2 * margin;
+    const availableHeight = height - 2 * margin;
     const breakpoints = {
       smallMobile: 320,
       mobile: 375,
@@ -951,9 +1049,6 @@ export default function Board() {
       { maxWidth: breakpoints.fullHD, size: 30 },
       { maxWidth: Infinity, size: 32 },
     ];
-    const margin = 5;
-    const availableWidth = width - margin * 2;
-    const availableHeight = height - margin * 2;
     const baseCellSize = cellSizes.find((bp) => width <= bp.maxWidth).size;
     let maxCols = Math.floor(availableWidth / baseCellSize);
     let maxRows = Math.floor(availableHeight / baseCellSize);
@@ -974,13 +1069,13 @@ export default function Board() {
     if (gridHeight > availableHeight) {
       maxRows = Math.floor(availableHeight / baseCellSize);
     }
-    const newBox = Array(maxRows)
-      .fill()
-      .map(() => Array(maxCols).fill(0));
-    const startRow = Math.min(10, maxRows - 1);
-    const startCol = Math.min(10, maxCols - 1);
-    const endRow = Math.min(10, maxRows - 1);
-    const endCol = Math.min(40, maxCols - 1);
+    const newBox = Array.from({ length: maxRows }, () =>
+      Array.from({ length: maxCols }, () => 0)
+    );
+    const startRow = Math.floor(maxRows / 2);
+    const startCol = Math.floor(maxCols / 4);
+    const endRow = startRow;
+    const endCol = Math.floor((maxCols * 3) / 4);
     newBox[startRow][startCol] = 2;
     newBox[endRow][endCol] = 3;
     setBox(newBox);
@@ -1011,10 +1106,10 @@ export default function Board() {
   useEffect(() => {
     if (isInitialRender.current || !rows || !cols) {
       isInitialRender.current = false;
-      prevbombNode.current = bombNode;
+      prevBombNode.current = bombNode;
       return;
     }
-    if (prevbombNode.current === bombNode) {
+    if (prevBombNode.current === bombNode) {
       return;
     }
     if (bombNode === 0) {
@@ -1038,19 +1133,32 @@ export default function Board() {
         console.log(bombSquad);
       })
     );
-    prevbombNode.current = bombNode;
-  }, [rows, cols, bombNode, getRandomCol, getRandomRow]);
+    if (lastAlgo) {
+      setClearPath(true);
+      setPendingAlgo(lastAlgo);
+    }
+    prevBombNode.current = bombNode;
+  }, [
+    rows,
+    cols,
+    bombNode,
+    getRandomCol,
+    getRandomRow,
+    lastAlgo,
+    setClearPath,
+    setPendingAlgo,
+  ]);
 
   return (
-    <div className="w-full h-full p-1 sm:p-2 md:p-3 flex justify-center relative">
+    <div className="w-full h-full p-4 sm:p-6 md:p-8 flex justify-center items-center relative bg-black">
       <div
         ref={gridRef}
-        className="grid bg-white rounded-lg shadow-xl border border-gray-200"
+        className="grid bg-black rounded-md shadow-md border border-slate-800 overflow-hidden"
         style={{
           gridTemplateColumns: `repeat(${cols}, ${cellSize}px)`,
           gridTemplateRows: `repeat(${rows}, ${cellSize}px)`,
           boxShadow:
-            "0 4px 6px rgba(0, 0, 0, 0.1), 0 -4px 6px rgba(0, 0, 0, 0.1), 4px 0 6px rgba(0, 0, 0, 0.1), -4px 0 6px rgba(0, 0, 0, 0.1)",
+            "0 4px 6px -1px rgba(0, 0,0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1)",
           userSelect: "none",
         }}
         onMouseDown={handleMouseDown}
@@ -1059,7 +1167,7 @@ export default function Board() {
         onMouseLeave={handleMouseUp}
       >
         {box.map((row, rowIndex) =>
-          row.map((col, colIndex) => (
+          row.map((cell, colIndex) => (
             <Cell
               key={`${rowIndex}-${colIndex}`}
               cellSize={cellSize}
@@ -1073,25 +1181,43 @@ export default function Board() {
       </div>
       {draggedNode && (
         <div
-          className="border border-gray-200 opacity-70 pointer-events-none"
+          className="border border-slate-700 bg-black/80 opacity-90 pointer-events-none rounded-md shadow-sm ring-1 ring-slate-500"
           style={{
             position: "absolute",
             width: `${cellSize}px`,
             height: `${cellSize}px`,
-            left: draggedNode.x - 25,
-            top: draggedNode.y - 110,
+            left: `${draggedNode.x - 25}px`,
+            top: `${draggedNode.y - 70}px`,
             zIndex: 10,
             cursor: "grabbing",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
           }}
         >
           {draggedNode.type === 2 && (
-            <Image src={start} width="100%" height="100%" />
+            <Image
+              src={start}
+              width="80%"
+              height="80%"
+              className="text-purple-400"
+            />
           )}
           {draggedNode.type === 3 && (
-            <Image src={circle} width="100%" height="100%" />
+            <Image
+              src={circle}
+              width="80%"
+              height="80%"
+              className="text-purple-400"
+            />
           )}
           {draggedNode.type === 4 && (
-            <Image src={bomb} width="100%" height="100%" />
+            <Image
+              src={bomb}
+              width="80%"
+              height="80%"
+              className="text-purple-400"
+            />
           )}
         </div>
       )}

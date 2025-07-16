@@ -29,6 +29,7 @@ export const Wrapper = ({ children }) => {
   const [bidirectionalSwarm, setBidirectionalSwarm] = useState(false);
   const [isVisualizing, setIsVisualizing] = useState(false);
   const [pendingAlgo, setPendingAlgo] = useState(null);
+  const [lastAlgo, setLastAlgo] = useState(null);
 
   const addBombNode = () => {
     setbombNode((cur) => cur + 1); // Correctly return the incremented value
@@ -60,7 +61,7 @@ export const Wrapper = ({ children }) => {
   const startClearBombs = () => {
     setClearBombs((prev) => !prev);
   };
-  const startClearWallsAdnWeights = () => {
+  const startClearWallsAndWeights = () => {
     setClearWallsAndWeights((prev) => !prev);
   };
   const startBfs = () => {
@@ -129,7 +130,7 @@ export const Wrapper = ({ children }) => {
         clearBombs,
         startClearBombs,
         clearWallsAndWeights,
-        startClearWallsAdnWeights,
+        startClearWallsAndWeights,
         bfs,
         setBfs,
         startBfs,
@@ -160,6 +161,8 @@ export const Wrapper = ({ children }) => {
         setPendingAlgo,
         clearPath,
         setClearPath,
+        lastAlgo,
+        setLastAlgo,
       }}
     >
       {children}
