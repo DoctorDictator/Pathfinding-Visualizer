@@ -395,7 +395,11 @@ export default function Navbar() {
             </div>
 
             <button
-              onClick={() => setStartAlgo(true)}
+              onClick={() => {
+                if (algorithm) {
+                  setStartAlgo(true);
+                }
+              }}
               className="bg-yellow-600 text-white hover:bg-yellow-500 px-6 py-2 rounded-md text-sm font-medium transition-colors"
             >
               Visualize {currentAlgo}
@@ -647,7 +651,11 @@ export default function Navbar() {
           )}
 
           <button
-            onClick={() => setStartAlgo(true)}
+            onClick={() => {
+              if (algorithm) {
+                setStartAlgo(true);
+              }
+            }}
             className="w-full bg-yellow-600 text-white hover:bg-yellow-500 px-4 py-2 rounded-md text-sm font-medium transition-colors"
           >
             Visualize {currentAlgo}

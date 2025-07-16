@@ -145,7 +145,7 @@ export default function Board() {
     if (clearPath && rows > 0 && cols > 0 && box.length > 0) {
       const { newGrid, animation } = generateClearPath(box, rows, cols);
       let i = 0;
-      const batchSize = 30;
+      const batchSize = 10;
       function animateStep() {
         if (!Array.isArray(animation) || i >= animation.length) {
           setBox(newGrid);
@@ -224,7 +224,7 @@ export default function Board() {
       setIsVisualizing(true);
       const { newGrid, animation } = generateBfs(box, rows, cols);
       let i = 0;
-      const batchSize = 30; // Adjust batch size for speed
+      const batchSize = 10; // Adjust batch size for speed
       function animateStep() {
         if (!Array.isArray(animation) || i >= animation.length) {
           setBox(newGrid);
@@ -266,7 +266,7 @@ export default function Board() {
       setIsVisualizing(true);
       const { newGrid, animation } = generateDfs(box, rows, cols);
       let i = 0;
-      const batchSize = 30;
+      const batchSize = 10;
       function animateStep() {
         if (!Array.isArray(animation) || i >= animation.length) {
           setBox(newGrid);
@@ -308,7 +308,7 @@ export default function Board() {
       setIsVisualizing(true);
       const { newGrid, animation } = generateDijkstra(box, rows, cols);
       let i = 0;
-      const batchSize = 30;
+      const batchSize = 10;
       function animateStep() {
         if (!Array.isArray(animation) || i >= animation.length) {
           setBox(newGrid);
@@ -350,7 +350,7 @@ export default function Board() {
       setIsVisualizing(true);
       const { newGrid, animation } = generateGreedyBfs(box, rows, cols);
       let i = 0;
-      const batchSize = 30;
+      const batchSize = 10;
       function animateStep() {
         if (!Array.isArray(animation) || i >= animation.length) {
           setBox(newGrid);
@@ -392,7 +392,7 @@ export default function Board() {
       setIsVisualizing(true);
       const { newGrid, animation } = generateAstar(box, rows, cols);
       let i = 0;
-      const batchSize = 30;
+      const batchSize = 10;
       function animateStep() {
         if (!Array.isArray(animation) || i >= animation.length) {
           setBox(newGrid);
@@ -434,7 +434,7 @@ export default function Board() {
       setIsVisualizing(true);
       const { newGrid, animation } = generateSwarm(box, rows, cols);
       let i = 0;
-      const batchSize = 30;
+      const batchSize = 10;
       function animateStep() {
         if (!Array.isArray(animation) || i >= animation.length) {
           setBox(newGrid);
@@ -476,7 +476,7 @@ export default function Board() {
       setIsVisualizing(true);
       const { newGrid, animation } = generateConvergentSwarm(box, rows, cols);
       let i = 0;
-      const batchSize = 30;
+      const batchSize = 10;
       function animateStep() {
         if (!Array.isArray(animation) || i >= animation.length) {
           setBox(newGrid);
@@ -522,7 +522,7 @@ export default function Board() {
         cols
       );
       let i = 0;
-      const batchSize = 30;
+      const batchSize = 10;
       function animateStep() {
         if (!Array.isArray(animation) || i >= animation.length) {
           setBox(newGrid);
