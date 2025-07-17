@@ -39,7 +39,7 @@ Algorithms go through bombs before the end, show scanning colors (light for rece
 ## How it Works
 
 - Drag start/end/bombs to move them.
-- Bombs: Path goes start -> bomb1 -> bomb2 -> ... -> end.
+- Bombs: Path goes start -> bomb1 -> bomb2 -> ... -> end (row wise).
 - Weights: Make the algorithm treat them as harder to cross.
 - Scanning: Light color for current area, darkening previous.
 - Path: Yellow highlight with effects, arrows move and fade as path completes.
