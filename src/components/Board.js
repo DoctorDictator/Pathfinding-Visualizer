@@ -1,23 +1,23 @@
-import { useState, useEffect, useRef, useContext } from "react";
-import produce from "immer";
-import Cell from "./Cell";
-import Image from "./Image";
-import start from "../icons/start.svg";
-import circle from "../icons/circle.svg";
-import weight from "../icons/weight.svg";
-import bomb from "../icons/bomb.svg";
+import { useContext, useRef } from "react";
 import { WrapperContext } from "../wrapper";
+import { useVisualizeAlgorithm } from "../hooks/useVisualizeAlgorithm";
+import { useVisualizeMaze } from "../hooks/useVisualizeMaze";
+import { useVisualizeClear } from "../hooks/useVisualizeClear";
+import { useClearPath } from "../hooks/useClearPath";
+import { useMouseHandlers } from "../hooks/useMouseHandlers";
+import { useGridResize } from "../hooks/useGridResize";
+import { useBombNode } from "../hooks/useBombNode";
+import Grid from "./Grid";
+
 import generateMaze from "../function/maze/generateMaze";
 import generateMazeVertical from "../function/maze/generateMazeVertical";
 import generateMazeHorizontal from "../function/maze/generateMazeHorizontal";
 import generateMazeRandom from "../function/maze/generateMazeRandomWalls";
 import generateMazeRandomWithWeights from "../function/maze/generateMazeRandomWeights";
-import clearBoard from "../function/clear/clearBoard";
 import generateClearBoard from "../function/clear/clearBoard";
 import generateClearBombs from "../function/clear/clearBombs";
 import generateClearWallsAndWeights from "../function/clear/clearWallsAndWeights";
 import generateBfs from "../function/algortihms/bfs";
-import { getOriginalType, getVisShade, isPath } from "../utils";
 import generateDfs from "../function/algortihms/dfs";
 import generateClearPath from "../function/clear";
 import generateDijkstra from "../function/algortihms/dijkstra";
@@ -27,59 +27,22 @@ import generateSwarm from "../function/algortihms/swarm";
 import generateConvergentSwarm from "../function/algortihms/convergentSwarm";
 import generateBidirectionalSwarm from "../function/algortihms/bidirectionalSwarm";
 
-const debounce = (func, wait) => {
-  let timeout;
-  return (...args) => {
-    clearTimeout(timeout);
-    timeout = setTimeout(() => func(...args), wait);
-  };
+// Globals (if needed, consider moving to context or state)
+export let animated = [];
+export let bombSquad = [];
+
+const algoMap = {
+  bfs: generateBfs,
+  dfs: generateDfs,
+  dijkstra: generateDijkstra,
+  astar: generateAstar,
+  greedyBfs: generateGreedyBfs,
+  swarm: generateSwarm,
+  convergentSwarm: generateConvergentSwarm,
+  bidirectionalSwarm: generateBidirectionalSwarm,
 };
 
-const getCellsBetween = (x0, y0, x1, y1, cellSize, rows, cols) => {
-  const cells = [];
-  const col0 = Math.floor(x0 / cellSize);
-  const row0 = Math.floor(y0 / cellSize);
-  const col1 = Math.floor(x1 / cellSize);
-  const row1 = Math.floor(y1 / cellSize);
-
-  if (
-    row0 < 0 ||
-    row0 >= rows ||
-    col0 < 0 ||
-    col0 >= cols ||
-    row1 < 0 ||
-    row1 >= rows ||
-    col1 < 0 ||
-    col1 >= cols
-  ) {
-    return cells;
-  }
-
-  const dx = col1 - col0;
-  const dy = row1 - row0;
-  const steps = Math.max(Math.abs(dx), Math.abs(dy)) + 1;
-
-  for (let i = 0; i <= steps; i++) {
-    const t = steps === 0 ? 0 : i / steps;
-    const row = Math.round(row0 + dy * t);
-    const col = Math.round(col0 + dx * t);
-    if (row >= 0 && row < rows && col >= 0 && col < cols) {
-      cells.push([row, col]);
-    }
-  }
-
-  return cells;
-};
-
-let animated = [];
-let bombSquad = [];
 export default function Board() {
-  const [dragging, setDragging] = useState(false);
-  const [draggedNode, setDraggedNode] = useState(null);
-  const [box, setBox] = useState([]);
-  const [rows, setRows] = useState(0);
-  const [cols, setCols] = useState(0);
-  const [cellSize, setCellSize] = useState(20);
   const {
     bombNode,
     recursiveDivision,
@@ -123,89 +86,38 @@ export default function Board() {
     lastAlgo,
     setLastAlgo,
   } = useContext(WrapperContext);
+
   const gridRef = useRef(null);
-  const isInitialRender = useRef(true);
-  const prevBombNode = useRef(null);
-  const lastMousePos = useRef(null);
-  const isClick = useRef(false);
 
-  const algoMap = {
-    bfs: generateBfs,
-    dfs: generateDfs,
-    dijkstra: generateDijkstra,
-    astar: generateAstar,
-    greedyBfs: generateGreedyBfs,
-    swarm: generateSwarm,
-    convergentSwarm: generateConvergentSwarm,
-    bidirectionalSwarm: generateBidirectionalSwarm,
-  };
+  const { box, setBox, rows, cols, cellSize } = useGridResize();
 
-  ////////////////////////////////////////////////
-  useEffect(() => {
-    if (clearPath && rows > 0 && cols > 0 && box.length > 0) {
-      const { newGrid, animation } = generateClearPath(box, rows, cols);
-      let i = 0;
-      const batchSize = 10;
-      function animateStep() {
-        if (!Array.isArray(animation) || i >= animation.length) {
-          setBox(newGrid);
-          setClearPath(false);
-          if (pendingAlgo) {
-            if (pendingAlgo === "bfs") setBfs(true);
-            if (pendingAlgo === "dfs") setDfs(true);
-            if (pendingAlgo === "dijkstra") setDijkstra(true);
-            if (pendingAlgo === "astar") setAstar(true);
-            if (pendingAlgo === "greedybfs") setGreedyBfs(true);
-            if (pendingAlgo === "swarm") setSwarm(true);
-            if (pendingAlgo === "convergentSwarm") setConvergentSwarm(true);
-            if (pendingAlgo === "bidirectionalSwarm")
-              setBidirectionalSwarm(true);
-
-            setPendingAlgo(null);
-          }
-          return;
-        }
-        let updates = [];
-        for (let j = 0; j < batchSize && i < animation.length; j++, i++) {
-          const cellUpdate = animation[i];
-          if (Array.isArray(cellUpdate) && cellUpdate.length === 3) {
-            updates.push(cellUpdate);
-          }
-        }
-        if (updates.length > 0) {
-          setBox((prev) =>
-            produce(prev, (draft) => {
-              updates.forEach(([r, c, val]) => {
-                draft[r][c] = val;
-              });
-            })
-          );
-        }
-        requestAnimationFrame(animateStep);
-      }
-      if (Array.isArray(animation) && animation.length > 0) {
-        animateStep();
-      } else if (newGrid) {
-        setBox(newGrid);
-        setClearPath(false);
-        if (pendingAlgo) {
-          if (pendingAlgo === "bfs") setBfs(true);
-          if (pendingAlgo === "dfs") setDfs(true);
-          if (pendingAlgo === "dijkstra") setDijkstra(true);
-          if (pendingAlgo === "astar") setAstar(true);
-          if (pendingAlgo === "greedybfs") setGreedyBfs(true);
-          if (pendingAlgo === "swarm") setSwarm(true);
-          if (pendingAlgo === "convergentSwarm") setConvergentSwarm(true);
-          if (pendingAlgo === "bidirectionalSwarm") setBidirectionalSwarm(true);
-          setPendingAlgo(null);
-        }
-      }
-    }
-  }, [
-    clearPath,
+  const {
+    dragging,
+    draggedNode,
+    setDraggedNode,
+    handleMouseDown,
+    handleMouseUp,
+    handleMouseMove,
+    startNodeDrag,
+  } = useMouseHandlers({
+    box,
+    setBox,
     rows,
     cols,
-    box.length,
+    cellSize,
+    gridRef,
+    algoMap,
+    lastAlgo,
+  });
+
+  useClearPath({
+    clearPath,
+    setClearPath,
+    generateClearPath,
+    box,
+    rows,
+    cols,
+    setBox,
     pendingAlgo,
     setPendingAlgo,
     setBfs,
@@ -216,1011 +128,241 @@ export default function Board() {
     setSwarm,
     setConvergentSwarm,
     setBidirectionalSwarm,
-  ]);
+    dependencies: [
+      setBfs,
+      setDfs,
+      setDijkstra,
+      setAstar,
+      setGreedyBfs,
+      setSwarm,
+      setConvergentSwarm,
+      setBidirectionalSwarm,
+    ],
+  });
 
-  useEffect(() => {
-    if (bfs && rows > 0 && cols > 0 && box.length > 0) {
-      setLastAlgo("bfs");
-      setIsVisualizing(true);
-      const { newGrid, animation } = generateBfs(box, rows, cols);
-      let i = 0;
-      const batchSize = 10; // Adjust batch size for speed
-      function animateStep() {
-        if (!Array.isArray(animation) || i >= animation.length) {
-          setBox(newGrid);
-          setBfs(false);
-          setIsVisualizing(false);
-          return;
-        }
-        let updates = [];
-        for (let j = 0; j < batchSize && i < animation.length; j++, i++) {
-          const cellUpdate = animation[i];
-          if (Array.isArray(cellUpdate) && cellUpdate.length === 3) {
-            updates.push(cellUpdate);
-          }
-        }
-        if (updates.length > 0) {
-          setBox((prev) =>
-            produce(prev, (draft) => {
-              updates.forEach(([r, c, val]) => {
-                draft[r][c] = val;
-              });
-            })
-          );
-        }
-        requestAnimationFrame(animateStep);
-      }
-      if (Array.isArray(animation) && animation.length > 0) {
-        animateStep();
-      } else if (newGrid) {
-        setBox(newGrid);
-        setBfs(false);
-        setIsVisualizing(false);
-      }
-    }
-  }, [bfs, rows, cols, box.length]);
-
-  useEffect(() => {
-    if (dfs && rows > 0 && cols > 0 && box.length > 0) {
-      setLastAlgo("dfs");
-      setIsVisualizing(true);
-      const { newGrid, animation } = generateDfs(box, rows, cols);
-      let i = 0;
-      const batchSize = 10;
-      function animateStep() {
-        if (!Array.isArray(animation) || i >= animation.length) {
-          setBox(newGrid);
-          setDfs(false);
-          setIsVisualizing(false);
-          return;
-        }
-        let updates = [];
-        for (let j = 0; j < batchSize && i < animation.length; j++, i++) {
-          const cellUpdate = animation[i];
-          if (Array.isArray(cellUpdate) && cellUpdate.length === 3) {
-            updates.push(cellUpdate);
-          }
-        }
-        if (updates.length > 0) {
-          setBox((prev) =>
-            produce(prev, (draft) => {
-              updates.forEach(([r, c, val]) => {
-                draft[r][c] = val;
-              });
-            })
-          );
-        }
-        requestAnimationFrame(animateStep);
-      }
-      if (Array.isArray(animation) && animation.length > 0) {
-        animateStep();
-      } else if (newGrid) {
-        setBox(newGrid);
-        setDfs(false);
-        setIsVisualizing(false);
-      }
-    }
-  }, [dfs, rows, cols, box.length]);
-
-  useEffect(() => {
-    if (dijkstra && rows > 0 && cols > 0 && box.length > 0) {
-      setLastAlgo("dijkstra");
-      setIsVisualizing(true);
-      const { newGrid, animation } = generateDijkstra(box, rows, cols);
-      let i = 0;
-      const batchSize = 10;
-      function animateStep() {
-        if (!Array.isArray(animation) || i >= animation.length) {
-          setBox(newGrid);
-          setDijkstra(false);
-          setIsVisualizing(false);
-          return;
-        }
-        let updates = [];
-        for (let j = 0; j < batchSize && i < animation.length; j++, i++) {
-          const cellUpdate = animation[i];
-          if (Array.isArray(cellUpdate) && cellUpdate.length === 3) {
-            updates.push(cellUpdate);
-          }
-        }
-        if (updates.length > 0) {
-          setBox((prev) =>
-            produce(prev, (draft) => {
-              updates.forEach(([r, c, val]) => {
-                draft[r][c] = val;
-              });
-            })
-          );
-        }
-        requestAnimationFrame(animateStep);
-      }
-      if (Array.isArray(animation) && animation.length > 0) {
-        animateStep();
-      } else if (newGrid) {
-        setBox(newGrid);
-        setDijkstra(false);
-        setIsVisualizing(false);
-      }
-    }
-  }, [dijkstra, rows, cols, box.length]);
-
-  useEffect(() => {
-    if (greedyBfs && rows > 0 && cols > 0 && box.length > 0) {
-      setLastAlgo("greedyBfs");
-      setIsVisualizing(true);
-      const { newGrid, animation } = generateGreedyBfs(box, rows, cols);
-      let i = 0;
-      const batchSize = 10;
-      function animateStep() {
-        if (!Array.isArray(animation) || i >= animation.length) {
-          setBox(newGrid);
-          setGreedyBfs(false);
-          setIsVisualizing(false);
-          return;
-        }
-        let updates = [];
-        for (let j = 0; j < batchSize && i < animation.length; j++, i++) {
-          const cellUpdate = animation[i];
-          if (Array.isArray(cellUpdate) && cellUpdate.length === 3) {
-            updates.push(cellUpdate);
-          }
-        }
-        if (updates.length > 0) {
-          setBox((prev) =>
-            produce(prev, (draft) => {
-              updates.forEach(([r, c, val]) => {
-                draft[r][c] = val;
-              });
-            })
-          );
-        }
-        requestAnimationFrame(animateStep);
-      }
-      if (Array.isArray(animation) && animation.length > 0) {
-        animateStep();
-      } else if (newGrid) {
-        setBox(newGrid);
-        setGreedyBfs(false);
-        setIsVisualizing(false);
-      }
-    }
-  }, [greedyBfs, rows, cols, box.length]);
-
-  useEffect(() => {
-    if (astar && rows > 0 && cols > 0 && box.length > 0) {
-      setLastAlgo("astar");
-      setIsVisualizing(true);
-      const { newGrid, animation } = generateAstar(box, rows, cols);
-      let i = 0;
-      const batchSize = 10;
-      function animateStep() {
-        if (!Array.isArray(animation) || i >= animation.length) {
-          setBox(newGrid);
-          setAstar(false);
-          setIsVisualizing(false);
-          return;
-        }
-        let updates = [];
-        for (let j = 0; j < batchSize && i < animation.length; j++, i++) {
-          const cellUpdate = animation[i];
-          if (Array.isArray(cellUpdate) && cellUpdate.length === 3) {
-            updates.push(cellUpdate);
-          }
-        }
-        if (updates.length > 0) {
-          setBox((prev) =>
-            produce(prev, (draft) => {
-              updates.forEach(([r, c, val]) => {
-                draft[r][c] = val;
-              });
-            })
-          );
-        }
-        requestAnimationFrame(animateStep);
-      }
-      if (Array.isArray(animation) && animation.length > 0) {
-        animateStep();
-      } else if (newGrid) {
-        setBox(newGrid);
-        setAstar(false);
-        setIsVisualizing(false);
-      }
-    }
-  }, [astar, rows, cols, box.length]);
-
-  useEffect(() => {
-    if (swarm && rows > 0 && cols > 0 && box.length > 0) {
-      setLastAlgo("swarm");
-      setIsVisualizing(true);
-      const { newGrid, animation } = generateSwarm(box, rows, cols);
-      let i = 0;
-      const batchSize = 10;
-      function animateStep() {
-        if (!Array.isArray(animation) || i >= animation.length) {
-          setBox(newGrid);
-          setSwarm(false);
-          setIsVisualizing(false);
-          return;
-        }
-        let updates = [];
-        for (let j = 0; j < batchSize && i < animation.length; j++, i++) {
-          const cellUpdate = animation[i];
-          if (Array.isArray(cellUpdate) && cellUpdate.length === 3) {
-            updates.push(cellUpdate);
-          }
-        }
-        if (updates.length > 0) {
-          setBox((prev) =>
-            produce(prev, (draft) => {
-              updates.forEach(([r, c, val]) => {
-                draft[r][c] = val;
-              });
-            })
-          );
-        }
-        requestAnimationFrame(animateStep);
-      }
-      if (Array.isArray(animation) && animation.length > 0) {
-        animateStep();
-      } else if (newGrid) {
-        setBox(newGrid);
-        setSwarm(false);
-        setIsVisualizing(false);
-      }
-    }
-  }, [swarm, rows, cols, box.length]);
-
-  useEffect(() => {
-    if (convergentSwarm && rows > 0 && cols > 0 && box.length > 0) {
-      setLastAlgo("convergentSwarm");
-      setIsVisualizing(true);
-      const { newGrid, animation } = generateConvergentSwarm(box, rows, cols);
-      let i = 0;
-      const batchSize = 10;
-      function animateStep() {
-        if (!Array.isArray(animation) || i >= animation.length) {
-          setBox(newGrid);
-          setConvergentSwarm(false);
-          setIsVisualizing(false);
-          return;
-        }
-        let updates = [];
-        for (let j = 0; j < batchSize && i < animation.length; j++, i++) {
-          const cellUpdate = animation[i];
-          if (Array.isArray(cellUpdate) && cellUpdate.length === 3) {
-            updates.push(cellUpdate);
-          }
-        }
-        if (updates.length > 0) {
-          setBox((prev) =>
-            produce(prev, (draft) => {
-              updates.forEach(([r, c, val]) => {
-                draft[r][c] = val;
-              });
-            })
-          );
-        }
-        requestAnimationFrame(animateStep);
-      }
-      if (Array.isArray(animation) && animation.length > 0) {
-        animateStep();
-      } else if (newGrid) {
-        setBox(newGrid);
-        setConvergentSwarm(false);
-        setIsVisualizing(false);
-      }
-    }
-  }, [convergentSwarm, rows, cols, box.length]);
-
-  useEffect(() => {
-    if (bidirectionalSwarm && rows > 0 && cols > 0 && box.length > 0) {
-      setLastAlgo("bidirectionalSwarm");
-      setIsVisualizing(true);
-      const { newGrid, animation } = generateBidirectionalSwarm(
-        box,
-        rows,
-        cols
-      );
-      let i = 0;
-      const batchSize = 10;
-      function animateStep() {
-        if (!Array.isArray(animation) || i >= animation.length) {
-          setBox(newGrid);
-          setBidirectionalSwarm(false);
-          setIsVisualizing(false);
-          return;
-        }
-        let updates = [];
-        for (let j = 0; j < batchSize && i < animation.length; j++, i++) {
-          const cellUpdate = animation[i];
-          if (Array.isArray(cellUpdate) && cellUpdate.length === 3) {
-            updates.push(cellUpdate);
-          }
-        }
-        if (updates.length > 0) {
-          setBox((prev) =>
-            produce(prev, (draft) => {
-              updates.forEach(([r, c, val]) => {
-                draft[r][c] = val;
-              });
-            })
-          );
-        }
-        requestAnimationFrame(animateStep);
-      }
-      if (Array.isArray(animation) && animation.length > 0) {
-        animateStep();
-      } else if (newGrid) {
-        setBox(newGrid);
-        setBidirectionalSwarm(false);
-        setIsVisualizing(false);
-      }
-    }
-  }, [bidirectionalSwarm, rows, cols, box.length]);
-
-  useEffect(() => {
-    if (recursiveDivision && rows > 0 && cols > 0 && box.length > 0) {
-      const { newGrid, animation } = generateMaze(box, rows, cols);
-      animated = animation;
-
-      let i = 0;
-      function animateStep() {
-        if (!Array.isArray(animation) || i >= animation.length) {
-          setBox(newGrid);
-          return;
-        }
-        const cell = animation[i];
-        if (Array.isArray(cell) && cell.length === 2) {
-          setBox((prev) =>
-            produce(prev, (draft) => {
-              const [r, c] = cell;
-
-              if (draft[r][c] !== 2 && draft[r][c] !== 3 && draft[r][c] !== 4) {
-                draft[r][c] = 1;
-              }
-            })
-          );
-        }
-        i++;
-        setTimeout(animateStep, speed);
-      }
-
-      if (Array.isArray(animation) && animation.length > 0) {
-        animateStep();
-        startRecursiveDivision();
-      } else if (newGrid) {
-        setBox(newGrid);
-        startRecursiveDivision();
-      }
-    }
-  }, [recursiveDivision, rows, cols, box.length]);
-
-  /////////////////////////////////////////////////////
-
-  useEffect(() => {
-    if (recursiveDivisionVertical && rows > 0 && cols > 0 && box.length > 0) {
-      const { newGrid, animation } = generateMazeVertical(box, rows, cols);
-      animated = animation;
-
-      let i = 0;
-      function animateStep() {
-        if (!Array.isArray(animation) || i >= animation.length) {
-          setBox(newGrid);
-          return;
-        }
-        const cell = animation[i];
-        if (Array.isArray(cell) && cell.length === 2) {
-          setBox((prev) =>
-            produce(prev, (draft) => {
-              const [r, c] = cell;
-
-              if (draft[r][c] !== 2 && draft[r][c] !== 3 && draft[r][c] !== 4) {
-                draft[r][c] = 1;
-              }
-            })
-          );
-        }
-        i++;
-        setTimeout(animateStep, speed);
-      }
-
-      if (Array.isArray(animation) && animation.length > 0) {
-        animateStep();
-        startRecursiveDivisionVertical();
-      } else if (newGrid) {
-        setBox(newGrid);
-        startRecursiveDivisionVertical();
-      }
-    }
-  }, [recursiveDivisionVertical, rows, cols, box.length]);
-
-  ////////////////////////////////////////////////////////////////////
-
-  useEffect(() => {
-    if (recursiveDivisionHorizontal && rows > 0 && cols > 0 && box.length > 0) {
-      const { newGrid, animation } = generateMazeHorizontal(box, rows, cols);
-      animated = animation;
-      let i = 0;
-      function animateStep() {
-        if (!Array.isArray(animation) || i >= animation.length) {
-          setBox(newGrid);
-          return;
-        }
-        const cell = animation[i];
-        if (Array.isArray(cell) && cell.length === 2) {
-          setBox((prev) =>
-            produce(prev, (draft) => {
-              const [r, c] = cell;
-
-              if (draft[r][c] !== 2 && draft[r][c] !== 3 && draft[r][c] !== 4) {
-                draft[r][c] = 1;
-              }
-            })
-          );
-        }
-        i++;
-        setTimeout(animateStep, speed);
-      }
-
-      if (Array.isArray(animation) && animation.length > 0) {
-        animateStep();
-        startRecursiveDivisionHorizontal();
-      } else if (newGrid) {
-        setBox(newGrid);
-        startRecursiveDivisionHorizontal();
-      }
-    }
-  }, [recursiveDivisionHorizontal, rows, cols, box.length]);
-
-  ////////////////////////////////////////////////////////////////
-  useEffect(() => {
-    if (randomMaze && rows > 0 && cols > 0 && box.length > 0) {
-      const { newGrid, animation } = generateMazeRandom(box, rows, cols);
-      animated = animation;
-      let i = 0;
-      function animateStep() {
-        if (!Array.isArray(animation) || i >= animation.length) {
-          setBox(newGrid);
-          return;
-        }
-        const cell = animation[i];
-        if (Array.isArray(cell) && cell.length === 2) {
-          setBox((prev) =>
-            produce(prev, (draft) => {
-              const [r, c] = cell;
-
-              if (draft[r][c] !== 2 && draft[r][c] !== 3 && draft[r][c] !== 4) {
-                draft[r][c] = 1;
-              }
-            })
-          );
-        }
-        i++;
-        setTimeout(animateStep, speed);
-      }
-
-      if (Array.isArray(animation) && animation.length > 0) {
-        animateStep();
-        startRandomMaze();
-      } else if (newGrid) {
-        setBox(newGrid);
-        startRandomMaze();
-      }
-    }
-  }, [randomMaze, rows, cols, box.length]);
-
-  /////////////////////////////////////////////////////////////////////
-
-  useEffect(() => {
-    if (randomMazeWithWeights && rows > 0 && cols > 0 && box.length > 0) {
-      const { newGrid, animation } = generateMazeRandomWithWeights(
-        box,
-        rows,
-        cols
-      );
-      animated = animation;
-
-      let i = 0;
-      function animateStep() {
-        if (!Array.isArray(animation) || i >= animation.length) {
-          setBox(newGrid);
-          return;
-        }
-        const cell = animation[i];
-        if (Array.isArray(cell) && cell.length === 2) {
-          setBox((prev) =>
-            produce(prev, (draft) => {
-              const [r, c] = cell;
-
-              if (draft[r][c] !== 2 && draft[r][c] !== 3 && draft[r][c] !== 4) {
-                draft[r][c] = 5;
-              }
-            })
-          );
-        }
-        i++;
-        setTimeout(animateStep, speed);
-      }
-
-      if (Array.isArray(animation) && animation.length > 0) {
-        animateStep();
-        startRandomMazeWithWeights();
-      } else if (newGrid) {
-        setBox(newGrid);
-        startRandomMazeWithWeights();
-      }
-    }
-  }, [randomMazeWithWeights, rows, cols, box.length]);
-
-  //////////////////////////////////////////////////////////////////
-
-  useEffect(() => {
-    if (clearBoard && rows > 0 && cols > 0 && box.length > 0) {
-      const { newGrid, animation } = generateClearBoard(box, rows, cols);
-      animated.reverse();
-      let i = 0;
-      function animateStep() {
-        if (!Array.isArray(animated) || i >= animated.length) {
-          setBox(newGrid);
-          return;
-        }
-        const cell = animated[i];
-        if (Array.isArray(cell) && cell.length === 2) {
-          setBox((prev) =>
-            produce(prev, (draft) => {
-              const [r, c] = cell;
-
-              if (draft[r][c] !== 2 && draft[r][c] !== 3) {
-                draft[r][c] = 0;
-              }
-            })
-          );
-        }
-        i++;
-        setTimeout(animateStep, 0.1);
-      }
-
-      if (Array.isArray(animated) && animated.length > 0) {
-        animateStep();
-        startClearBoard();
-      } else if (newGrid) {
-        setBox(newGrid);
-        startClearBoard();
-      }
-    }
-  }, [clearBoard, rows, cols, box.length]);
-
-  //////////////////////////////////////////////////////////////
-
-  useEffect(() => {
-    if (clearBombs && rows > 0 && cols > 0 && box.length > 0) {
-      const { newGrid, animation } = generateClearBombs(box, rows, cols);
-
-      let i = 0;
-      function animateStep() {
-        if (!Array.isArray(animation) || i >= animation.length) {
-          setBox(newGrid);
-          return;
-        }
-        const cell = animation[i];
-        if (Array.isArray(cell) && cell.length === 2) {
-          setBox((prev) =>
-            produce(prev, (draft) => {
-              const [r, c] = cell;
-
-              if (draft[r][c] !== 2 && draft[r][c] !== 3 && draft[r][c] !== 1) {
-                draft[r][c] = 0;
-              }
-            })
-          );
-        }
-        i++;
-        setTimeout(animateStep, 0);
-      }
-
-      if (Array.isArray(animation) && animation.length > 0) {
-        animateStep();
-        startClearBombs();
-      } else if (newGrid) {
-        setBox(newGrid);
-        startClearBombs();
-      }
-    }
-  }, [clearBombs, rows, cols, box.length]);
-
-  //////////////////////////////////////////////////////////////////
-
-  useEffect(() => {
-    if (clearWallsAndWeights && rows > 0 && cols > 0 && box.length > 0) {
-      const { newGrid, animation } = generateClearWallsAndWeights(
-        box,
-        rows,
-        cols
-      );
-
-      let i = 0;
-      function animateStep() {
-        if (!Array.isArray(animation) || i >= animation.length) {
-          setBox(newGrid);
-          return;
-        }
-        const cell = animation[i];
-        if (Array.isArray(cell) && cell.length === 2) {
-          setBox((prev) =>
-            produce(prev, (draft) => {
-              const [r, c] = cell;
-
-              if (draft[r][c] !== 2 && draft[r][c] !== 3 && draft[r][c] !== 4) {
-                draft[r][c] = 0;
-              }
-            })
-          );
-        }
-        i++;
-        setTimeout(animateStep, 0);
-      }
-
-      if (Array.isArray(animation) && animation.length > 0) {
-        animateStep();
-        startClearWallsAndWeights();
-      } else if (newGrid) {
-        setBox(newGrid);
-        startClearWallsAndWeights();
-      }
-    }
-  }, [clearWallsAndWeights, rows, cols, box.length]);
-  const addWalls = (cells) => {
-    if (draggedNode) return;
-    setBox(
-      produce((draft) => {
-        cells.forEach(([row, col]) => {
-          const originalType = getOriginalType(draft[row][col]);
-          if (originalType !== 2 && originalType !== 3 && originalType !== 4) {
-            draft[row][col] = originalType === 1 ? 0 : 1;
-          }
-        });
-      })
-    );
-  };
-
-  const startNodeDrag = (row, col, type, x, y) => {
-    setDraggedNode({ row, col, type, x, y });
-    setDragging(true);
-    isClick.current = false;
-  };
-
-  const handleMouseDown = (e) => {
-    if (e.button !== 0) return;
-    e.preventDefault();
-    const gridElement = gridRef.current;
-    if (!gridElement) return;
-    const rect = gridElement.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    const col = Math.floor(x / cellSize);
-    const row = Math.floor(y / cellSize);
-    if (row >= 0 && row < rows && col >= 0 && col < cols) {
-      const originalType = getOriginalType(box[row][col]);
-      if (originalType === 2 || originalType === 3 || originalType === 4) {
-        startNodeDrag(row, col, originalType, e.clientX, e.clientY);
-      } else {
-        setDragging(true);
-        isClick.current = true;
-        addWalls([[row, col]]);
-        lastMousePos.current = { x, y };
-      }
-    }
-  };
-
-  const handleMouseUp = (e) => {
-    if (e.button !== 0) return;
-    e.preventDefault();
-    setDragging(false);
-    lastMousePos.current = null;
-    if (isClick.current && !draggedNode) {
-      isClick.current = false;
-      return;
-    }
-    if (!draggedNode) {
-      isClick.current = false;
-      return;
-    }
-    const gridElement = gridRef.current;
-    if (!gridElement) {
-      setDraggedNode(null);
-      isClick.current = false;
-      return;
-    }
-    const rect = gridElement.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    const targetCol = Math.floor(x / cellSize);
-    const targetRow = Math.floor(y / cellSize);
-    if (
-      targetRow < 0 ||
-      targetRow >= rows ||
-      targetCol < 0 ||
-      targetCol >= cols
-    ) {
-      setDraggedNode(null);
-      isClick.current = false;
-      return;
-    }
-    if (targetRow === draggedNode.row && targetCol === draggedNode.col) {
-      setDraggedNode(null);
-      isClick.current = false;
-      return;
-    }
-    if (
-      getOriginalType(box[targetRow][targetCol]) === 2 ||
-      getOriginalType(box[targetRow][targetCol]) === 3 ||
-      getOriginalType(box[targetRow][targetCol]) === 4
-    ) {
-      setDraggedNode(null);
-      isClick.current = false;
-      return;
-    }
-    const clearedGrid = produce(box, (draft) => {
-      for (let r = 0; r < rows; r++) {
-        for (let c = 0; c < cols; c++) {
-          const val = draft[r][c];
-          if (getVisShade(val) > -1) {
-            draft[r][c] = getOriginalType(val);
-          } else if (isPath(val)) {
-            draft[r][c] = getOriginalType(val);
-          }
-        }
-      }
-    });
-    const newBoxAfterMove = produce(clearedGrid, (draft) => {
-      draft[draggedNode.row][draggedNode.col] = 0;
-      draft[targetRow][targetCol] = draggedNode.type;
-    });
-    let finalGrid = newBoxAfterMove;
-    if (lastAlgo && algoMap[lastAlgo]) {
-      const generateFunc = algoMap[lastAlgo];
-      const { newGrid } = generateFunc(newBoxAfterMove, rows, cols);
-      finalGrid = newGrid;
-    }
-    setBox(finalGrid);
-    setDraggedNode(null);
-    isClick.current = false;
-  };
-
-  const handleMouseMove = (e) => {
-    if (!dragging) return;
-    const gridElement = gridRef.current;
-    if (!gridElement) return;
-    const rect = gridElement.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    const col = Math.floor(x / cellSize);
-    const row = Math.floor(y / cellSize);
-
-    if (draggedNode) {
-      setDraggedNode((prev) => ({
-        ...prev,
-        x: e.clientX,
-        y: e.clientY,
-      }));
-    } else if (row >= 0 && row < rows && col >= 0 && col < cols) {
-      isClick.current = false;
-      const cells = lastMousePos.current
-        ? getCellsBetween(
-            lastMousePos.current.x,
-            lastMousePos.current.y,
-            x,
-            y,
-            cellSize,
-            rows,
-            cols
-          )
-        : [[row, col]];
-      addWalls(cells);
-      lastMousePos.current = { x, y };
-    }
-  };
-
-  const updateGridSize = () => {
-    const width = window.innerWidth;
-    const height = window.innerHeight;
-    const isWide = width > height;
-    const margin = width < 640 ? 16 : width < 768 ? 24 : 32;
-    const availableWidth = width - 2 * margin;
-    const availableHeight = height - 2 * margin;
-    const breakpoints = {
-      smallMobile: 320,
-      mobile: 375,
-      largeMobile: 414,
-      tablet: 768,
-      largeTablet: 1024,
-      laptop: 1280,
-      desktop: 1440,
-      fullHD: 1920,
-    };
-    const cellSizes = [
-      { maxWidth: breakpoints.smallMobile, size: 16 },
-      { maxWidth: breakpoints.mobile, size: 18 },
-      { maxWidth: breakpoints.largeMobile, size: 20 },
-      { maxWidth: breakpoints.tablet, size: 22 },
-      { maxWidth: breakpoints.largeTablet, size: 24 },
-      { maxWidth: breakpoints.laptop, size: 26 },
-      { maxWidth: breakpoints.desktop, size: 28 },
-      { maxWidth: breakpoints.fullHD, size: 30 },
-      { maxWidth: Infinity, size: 32 },
-    ];
-    const baseCellSize = cellSizes.find((bp) => width <= bp.maxWidth).size;
-    let maxCols = Math.floor(availableWidth / baseCellSize);
-    let maxRows = Math.floor(availableHeight / baseCellSize);
-    if (width >= breakpoints.tablet && isWide) {
-      maxCols = Math.floor(maxCols * 1.2);
-      maxRows = Math.floor(maxRows * 0.8);
-    } else if (width >= breakpoints.tablet && !isWide) {
-      maxCols = Math.floor(maxCols * 0.8);
-      maxRows = Math.floor(maxRows * 1.2);
-    }
-    maxCols = Math.max(1, maxCols);
-    maxRows = Math.max(1, maxRows);
-    const gridWidth = maxCols * baseCellSize;
-    const gridHeight = maxRows * baseCellSize;
-    if (gridWidth > availableWidth) {
-      maxCols = Math.floor(availableWidth / baseCellSize);
-    }
-    if (gridHeight > availableHeight) {
-      maxRows = Math.floor(availableHeight / baseCellSize);
-    }
-    const newBox = Array.from({ length: maxRows }, () =>
-      Array.from({ length: maxCols }, () => 0)
-    );
-    const startRow = Math.floor(maxRows / 2);
-    const startCol = Math.floor(maxCols / 4);
-    const endRow = startRow;
-    const endCol = Math.floor((maxCols * 3) / 4);
-    newBox[startRow][startCol] = 2;
-    newBox[endRow][endCol] = 3;
-    setBox(newBox);
-    setRows(maxRows);
-    setCols(maxCols);
-    setCellSize(baseCellSize);
-  };
-
-  function getRandomRow(rows) {
-    return getRandomNumber(0, rows - 1);
-  }
-
-  function getRandomCol(cols) {
-    return getRandomNumber(0, cols - 1);
-  }
-
-  function getRandomNumber(min, max) {
-    return Math.floor(Math.random() * (max - min + 1)) + min;
-  }
-
-  useEffect(() => {
-    updateGridSize();
-    const debouncedUpdate = debounce(updateGridSize, 100);
-    window.addEventListener("resize", debouncedUpdate);
-    return () => window.removeEventListener("resize", debouncedUpdate);
-  }, []);
-
-  useEffect(() => {
-    if (isInitialRender.current || !rows || !cols) {
-      isInitialRender.current = false;
-      prevBombNode.current = bombNode;
-      return;
-    }
-    if (prevBombNode.current === bombNode) {
-      return;
-    }
-    if (bombNode === 0) {
-      return;
-    }
-    let rowRandom = getRandomRow(rows);
-    let colRandom = getRandomCol(cols);
-    setBox(
-      produce((draft) => {
-        while (
-          draft[rowRandom][colRandom] === 1 ||
-          draft[rowRandom][colRandom] === 2 ||
-          draft[rowRandom][colRandom] === 3 ||
-          draft[rowRandom][colRandom] === 4
-        ) {
-          rowRandom = getRandomRow(rows);
-          colRandom = getRandomCol(cols);
-        }
-        draft[rowRandom][colRandom] = 4;
-        bombSquad.push([rowRandom, colRandom]);
-        console.log(bombSquad);
-      })
-    );
-    if (lastAlgo) {
-      setClearPath(true);
-      setPendingAlgo(lastAlgo);
-    }
-    prevBombNode.current = bombNode;
-  }, [
+  useVisualizeAlgorithm({
+    trigger: bfs,
+    setTrigger: setBfs,
+    generateFunc: generateBfs,
+    box,
     rows,
     cols,
+    setBox,
+    setIsVisualizing,
+    setLastAlgo,
+    algoName: "bfs",
+  });
+
+  useVisualizeAlgorithm({
+    trigger: dfs,
+    setTrigger: setDfs,
+    generateFunc: generateDfs,
+    box,
+    rows,
+    cols,
+    setBox,
+    setIsVisualizing,
+    setLastAlgo,
+    algoName: "dfs",
+  });
+
+  useVisualizeAlgorithm({
+    trigger: dijkstra,
+    setTrigger: setDijkstra,
+    generateFunc: generateDijkstra,
+    box,
+    rows,
+    cols,
+    setBox,
+    setIsVisualizing,
+    setLastAlgo,
+    algoName: "dijkstra",
+  });
+
+  useVisualizeAlgorithm({
+    trigger: greedyBfs,
+    setTrigger: setGreedyBfs,
+    generateFunc: generateGreedyBfs,
+    box,
+    rows,
+    cols,
+    setBox,
+    setIsVisualizing,
+    setLastAlgo,
+    algoName: "greedyBfs",
+  });
+
+  useVisualizeAlgorithm({
+    trigger: astar,
+    setTrigger: setAstar,
+    generateFunc: generateAstar,
+    box,
+    rows,
+    cols,
+    setBox,
+    setIsVisualizing,
+    setLastAlgo,
+    algoName: "astar",
+  });
+
+  useVisualizeAlgorithm({
+    trigger: swarm,
+    setTrigger: setSwarm,
+    generateFunc: generateSwarm,
+    box,
+    rows,
+    cols,
+    setBox,
+    setIsVisualizing,
+    setLastAlgo,
+    algoName: "swarm",
+  });
+
+  useVisualizeAlgorithm({
+    trigger: convergentSwarm,
+    setTrigger: setConvergentSwarm,
+    generateFunc: generateConvergentSwarm,
+    box,
+    rows,
+    cols,
+    setBox,
+    setIsVisualizing,
+    setLastAlgo,
+    algoName: "convergentSwarm",
+  });
+
+  useVisualizeAlgorithm({
+    trigger: bidirectionalSwarm,
+    setTrigger: setBidirectionalSwarm,
+    generateFunc: generateBidirectionalSwarm,
+    box,
+    rows,
+    cols,
+    setBox,
+    setIsVisualizing,
+    setLastAlgo,
+    algoName: "bidirectionalSwarm",
+  });
+
+  useVisualizeMaze({
+    trigger: recursiveDivision,
+    startFunc: startRecursiveDivision,
+    generateFunc: generateMaze,
+    box,
+    rows,
+    cols,
+    setBox,
+    speed,
+    wallValue: 1,
+  });
+
+  useVisualizeMaze({
+    trigger: recursiveDivisionVertical,
+    startFunc: startRecursiveDivisionVertical,
+    generateFunc: generateMazeVertical,
+    box,
+    rows,
+    cols,
+    setBox,
+    speed,
+    wallValue: 1,
+  });
+
+  useVisualizeMaze({
+    trigger: recursiveDivisionHorizontal,
+    startFunc: startRecursiveDivisionHorizontal,
+    generateFunc: generateMazeHorizontal,
+    box,
+    rows,
+    cols,
+    setBox,
+    speed,
+    wallValue: 1,
+  });
+
+  useVisualizeMaze({
+    trigger: randomMaze,
+    startFunc: startRandomMaze,
+    generateFunc: generateMazeRandom,
+    box,
+    rows,
+    cols,
+    setBox,
+    speed,
+    wallValue: 1,
+  });
+
+  useVisualizeMaze({
+    trigger: randomMazeWithWeights,
+    startFunc: startRandomMazeWithWeights,
+    generateFunc: generateMazeRandomWithWeights,
+    box,
+    rows,
+    cols,
+    setBox,
+    speed,
+    wallValue: 5,
+  });
+
+  useVisualizeClear({
+    trigger: clearBoard,
+    startFunc: startClearBoard,
+    generateFunc: generateClearBoard,
+    box,
+    rows,
+    cols,
+    setBox,
+    speed: 0.1,
+    clearCondition: (val) => val !== 2 && val !== 3,
+  });
+
+  useVisualizeClear({
+    trigger: clearBombs,
+    startFunc: startClearBombs,
+    generateFunc: generateClearBombs,
+    box,
+    rows,
+    cols,
+    setBox,
+    speed: 0,
+    clearCondition: (val) => val !== 2 && val !== 3 && val !== 1,
+  });
+
+  useVisualizeClear({
+    trigger: clearWallsAndWeights,
+    startFunc: startClearWallsAndWeights,
+    generateFunc: generateClearWallsAndWeights,
+    box,
+    rows,
+    cols,
+    setBox,
+    speed: 0,
+    clearCondition: (val) => val !== 2 && val !== 3 && val !== 4,
+  });
+
+  useBombNode({
     bombNode,
-    getRandomCol,
-    getRandomRow,
+    rows,
+    cols,
+    box,
+    setBox,
     lastAlgo,
     setClearPath,
     setPendingAlgo,
-  ]);
+  });
 
   return (
-    <div className="w-full h-full p-4 sm:p-6 md:p-8 flex justify-center items-center relative bg-black">
-      <div
-        ref={gridRef}
-        className="grid bg-black rounded-md shadow-md border border-slate-800 overflow-hidden"
-        style={{
-          gridTemplateColumns: `repeat(${cols}, ${cellSize}px)`,
-          gridTemplateRows: `repeat(${rows}, ${cellSize}px)`,
-          boxShadow:
-            "0 4px 6px -1px rgba(0, 0,0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1)",
-          userSelect: "none",
-        }}
-        onMouseDown={handleMouseDown}
-        onMouseUp={handleMouseUp}
-        onMouseMove={handleMouseMove}
-        onMouseLeave={handleMouseUp}
-      >
-        {box.map((row, rowIndex) =>
-          row.map((cell, colIndex) => (
-            <Cell
-              key={`${rowIndex}-${colIndex}`}
-              cellSize={cellSize}
-              row={rowIndex}
-              col={colIndex}
-              cell={box[rowIndex][colIndex]}
-              startNodeDrag={startNodeDrag}
-            />
-          ))
-        )}
-      </div>
-      {draggedNode && (
-        <div
-          className="border border-slate-700 bg-black/80 opacity-90 pointer-events-none rounded-md shadow-sm ring-1 ring-slate-500"
-          style={{
-            position: "absolute",
-            width: `${cellSize}px`,
-            height: `${cellSize}px`,
-            left: `${draggedNode.x - 25}px`,
-            top: `${draggedNode.y - 70}px`,
-            zIndex: 10,
-            cursor: "grabbing",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          {draggedNode.type === 2 && (
-            <Image
-              src={start}
-              width="80%"
-              height="80%"
-              className="text-purple-400"
-            />
-          )}
-          {draggedNode.type === 3 && (
-            <Image
-              src={circle}
-              width="80%"
-              height="80%"
-              className="text-purple-400"
-            />
-          )}
-          {draggedNode.type === 4 && (
-            <Image
-              src={bomb}
-              width="80%"
-              height="80%"
-              className="text-purple-400"
-            />
-          )}
-        </div>
-      )}
-    </div>
+    <Grid
+      box={box}
+      rows={rows}
+      cols={cols}
+      cellSize={cellSize}
+      gridRef={gridRef}
+      handleMouseDown={handleMouseDown}
+      handleMouseUp={handleMouseUp}
+      handleMouseMove={handleMouseMove}
+      draggedNode={draggedNode}
+      startNodeDrag={startNodeDrag}
+    />
   );
 }
