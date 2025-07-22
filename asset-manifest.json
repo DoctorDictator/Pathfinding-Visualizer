@@ -1,7 +1,7 @@
 {
   "files": {
-    "main.css": "/Pathfinding-Visualizer/static/css/main.dc712159.css",
-    "main.js": "/Pathfinding-Visualizer/static/js/main.550f7489.js",
+    "main.css": "/Pathfinding-Visualizer/static/css/main.71663390.css",
+    "main.js": "/Pathfinding-Visualizer/static/js/main.6bf9edac.js",
     "static/js/453.a5250cc0.chunk.js": "/Pathfinding-Visualizer/static/js/453.a5250cc0.chunk.js",
     "static/media/logo.svg": "/Pathfinding-Visualizer/static/media/logo.6ce24c58023cc2f8fd88fe9d219db6c6.svg",
     "static/media/weight.svg": "/Pathfinding-Visualizer/static/media/weight.2e4bdffd11cd11e90c27239c5852e008.svg",
@@ -13,12 +13,12 @@
     "static/media/triangletwo-down.svg": "/Pathfinding-Visualizer/static/media/triangletwo-down.59a63b875eaf2f81016f65851e4e43de.svg",
     "static/media/triangletwo-left.svg": "/Pathfinding-Visualizer/static/media/triangletwo-left.c7c5871711fa1bd6eb686812387ffc54.svg",
     "static/media/circle.svg": "/Pathfinding-Visualizer/static/media/circle.a538bedab8a991b7681c03c8ac00c0ee.svg",
-    "main.dc712159.css.map": "/Pathfinding-Visualizer/static/css/main.dc712159.css.map",
-    "main.550f7489.js.map": "/Pathfinding-Visualizer/static/js/main.550f7489.js.map",
+    "main.71663390.css.map": "/Pathfinding-Visualizer/static/css/main.71663390.css.map",
+    "main.6bf9edac.js.map": "/Pathfinding-Visualizer/static/js/main.6bf9edac.js.map",
     "453.a5250cc0.chunk.js.map": "/Pathfinding-Visualizer/static/js/453.a5250cc0.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.dc712159.css",
-    "static/js/main.550f7489.js"
+    "static/css/main.71663390.css",
+    "static/js/main.6bf9edac.js"
   ]
 }
