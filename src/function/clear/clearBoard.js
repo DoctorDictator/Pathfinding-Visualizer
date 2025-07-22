@@ -1,12 +1,15 @@
 export default function generateClearBoard(box, rows, cols) {
-  // 0: empty, 1: wall, 2: start, 3: end, 4: bombst, 5: weights
+  // 0: empty, 1: wall, 2: start, 3: end, 4: bombs, 5: weights
+  const startValues = [2, 20, 42, 43, 44, 45];
+  const endValues = [3, 19, 48, 49, 50, 51];
+
   const newGrid = Array.from({ length: rows }, () => Array(cols).fill(0));
   let start = null,
     end = null;
   for (let i = 0; i < rows; i++) {
     for (let j = 0; j < cols; j++) {
-      if (box[i][j] === 2) start = [i, j];
-      if (box[i][j] === 3) end = [i, j];
+      if (startValues.includes(box[i][j])) start = [i, j];
+      if (endValues.includes(box[i][j])) end = [i, j];
     }
   }
 
@@ -24,10 +27,6 @@ export default function generateClearBoard(box, rows, cols) {
     animation.push([0, j]);
     animation.push([rows - 1, j]);
   }
-
-  const reservedSet = new Set();
-  if (start) reservedSet.add(`${start[0]},${start[1]}`);
-  if (end) reservedSet.add(`${end[0]},${end[1]}`);
 
   for (let i = 0; i < rows; i++) {
     for (let j = 0; j < cols; j++) {

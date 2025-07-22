@@ -84,21 +84,26 @@ function divide(
 }
 
 export default function generateMaze(box, rows, cols) {
-  // 0: empty, 1: wall, 2: start, 3: end, 4: bombst, 5: weights
+  // 0: empty, 1: wall, 2: start, 3: end, 4: bombs, 5: weights
+
+  const startValues = [2, 20, 42, 43, 44, 45];
+  const endValues = [3, 19, 48, 49, 50, 51];
+  const bombValues = [4, 17, 36, 37, 38, 39];
+
   const newGrid = Array.from({ length: rows }, () => Array(cols).fill(0));
   let start = null,
     end = null,
-    weight = [];
+    bombs = [];
   for (let i = 0; i < rows; i++) {
     for (let j = 0; j < cols; j++) {
-      if (box[i][j] === 2) start = [i, j];
-      if (box[i][j] === 3) end = [i, j];
-      if (box[i][j] === 4) weight.push([i, j]);
+      if (startValues.includes(box[i][j])) start = [i, j];
+      if (endValues.includes(box[i][j])) end = [i, j];
+      if (bombValues.includes(box[i][j])) bombs.push([i, j]);
     }
   }
 
   let animation = [];
-  // Place outer walls
+
   for (let i = 0; i < rows; i++) {
     newGrid[i][0] = 1;
     newGrid[i][cols - 1] = 1;
@@ -112,18 +117,18 @@ export default function generateMaze(box, rows, cols) {
     animation.push([rows - 1, j]);
   }
 
-  // Reserve start/end/bombs positions
   const reservedSet = new Set();
-  if (start) reservedSet.add(`${start[0]},${start[1]}`);
-  if (end) reservedSet.add(`${end[0]},${end[1]}`);
-  if (weight) reservedSet.add(`${weight[0]},${weight[1]}`);
-
-  // Fill everything inside with empty first
-  for (let i = 1; i < rows - 1; i++) {
-    for (let j = 1; j < cols - 1; j++) {
-      newGrid[i][j] = 0;
-    }
+  if (start) {
+    startValues.forEach((val) =>
+      reservedSet.add(`${start[0]},${start[1]},${val}`)
+    );
   }
+  if (end) {
+    endValues.forEach((val) => reservedSet.add(`${end[0]},${end[1]},${val}`));
+  }
+  bombs.forEach(([r, c]) => {
+    bombValues.forEach((val) => reservedSet.add(`${r},${c},${val}`));
+  });
 
   divide(
     newGrid,
@@ -136,11 +141,10 @@ export default function generateMaze(box, rows, cols) {
     reservedSet
   );
 
-  // Restore start/end/bombs
   if (start) newGrid[start[0]][start[1]] = 2;
   if (end) newGrid[end[0]][end[1]] = 3;
-  for (let i = 0; i < weight.length; i++) {
-    let [r, c] = weight[i];
+  for (let i = 0; i < bombs.length; i++) {
+    let [r, c] = bombs[i];
     newGrid[r][c] = 4;
   }
 
