@@ -1,0 +1,24 @@
+{
+  "files": {
+    "main.css": "/static/css/main.dc712159.css",
+    "main.js": "/static/js/main.04f11974.js",
+    "static/js/453.a5250cc0.chunk.js": "/static/js/453.a5250cc0.chunk.js",
+    "static/media/logo.svg": "/static/media/logo.6ce24c58023cc2f8fd88fe9d219db6c6.svg",
+    "static/media/weight.svg": "/static/media/weight.2e4bdffd11cd11e90c27239c5852e008.svg",
+    "static/media/bomb.svg": "/static/media/bomb.08073286dc97e9e9885aa0d855ccb354.svg",
+    "static/media/start.svg": "/static/media/start.410b8ba9a14fa0b8c2c2fc66e95b0f92.svg",
+    "static/media/triangletwo-right.svg": "/static/media/triangletwo-right.c7b52e1e99ce162af0df0b8191d1b636.svg",
+    "static/media/triangletwo-up.svg": "/static/media/triangletwo-up.5c5fbe98a462cd66817673201e0699dd.svg",
+    "static/media/triangletwo-down.svg": "/static/media/triangletwo-down.59a63b875eaf2f81016f65851e4e43de.svg",
+    "static/media/triangletwo-left.svg": "/static/media/triangletwo-left.c7c5871711fa1bd6eb686812387ffc54.svg",
+    "index.html": "/index.html",
+    "static/media/circle.svg": "/static/media/circle.a538bedab8a991b7681c03c8ac00c0ee.svg",
+    "main.dc712159.css.map": "/static/css/main.dc712159.css.map",
+    "main.04f11974.js.map": "/static/js/main.04f11974.js.map",
+    "453.a5250cc0.chunk.js.map": "/static/js/453.a5250cc0.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.dc712159.css",
+    "static/js/main.04f11974.js"
+  ]
+}
